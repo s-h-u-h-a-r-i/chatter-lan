@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+
+- Use color vars from this file only: @src/styles/\_theme.css
+- Default element styles are in @src/styles/global.css
