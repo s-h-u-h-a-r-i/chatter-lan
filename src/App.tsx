@@ -15,21 +15,15 @@ const App: Component = () => {
   const isReady = () => userStore.userName !== null && ipStore.userIp !== null;
 
   onMount(async () => {
-    const ipResult = await Result.fromPromise(ipService.initializeUserIp());
-    if (ipResult.isErr()) {
+    (
+      await Result.allSequential(
+        ipService.initializeUserIp(),
+        roomService.subscribeToRoomChanges()
+      )
+    ).tapErr((error) => {
       // eslint-disable-next-line no-console
-      console.error(`Failed to inialize IP: ${ipResult.error}`);
-      return;
-    }
-
-    const roomResult = await Result.fromPromise(
-      roomService.subscribeToRoomChanges()
-    );
-    if (roomResult.isErr()) {
-      // eslint-disable-next-line no-console
-      console.error(`Failed to subscribe to room changes: ${roomResult.error}`);
-      return;
-    }
+      console.error("Initialization error:", error);
+    });
 
     // eslint-disable-next-line no-console
     console.log("App initialized");
