@@ -81,7 +81,7 @@ class Ok<O> {
    * const result = Result.ok(5);
    * const doubled = result.map((x) => x * 2); // Ok(10)
    */
-  map<R>(fn: (value: O) => R): Ok<R> {
+  map<R>(fn: (v: O) => R): Ok<R> {
     return new Ok(fn(this.value));
   }
 
@@ -96,7 +96,7 @@ class Ok<O> {
    * const result = Result.ok("user-id");
    * const user = await result.mapAsync((id) => fetchUser(id));
    */
-  async mapAsync<R>(fn: (value: O) => Promise<R>): Promise<Ok<R>> {
+  async mapAsync<R>(fn: (v: O) => Promise<R>): Promise<Ok<R>> {
     return new Ok(await fn(this.value));
   }
 
@@ -116,7 +116,7 @@ class Ok<O> {
    *   return Result.err("Negative number");
    * }); // Ok(10)
    */
-  andThen<R, E>(fn: (value: O) => Result<R, E>): Result<R, E> {
+  andThen<R, E>(fn: (v: O) => Result<R, E>): Result<R, E> {
     return fn(this.value);
   }
 
@@ -128,7 +128,7 @@ class Ok<O> {
    * @param _fn: Function to transform the error (unused for Ok)
    * @returns Returns itself unchanged
    */
-  mapErr<R>(_fn: (error: never) => R): this {
+  mapErr<R>(_fn: (e: never) => R): this {
     return this;
   }
 
@@ -140,7 +140,7 @@ class Ok<O> {
    * @param _fn Async function to transform the error (unused for Ok)
    * @returns A Promise that resolves to itself unchanged
    */
-  async mapErrAsync<R>(_fn: (error: never) => Promise<R>): Promise<this> {
+  async mapErrAsync<R>(_fn: (e: never) => Promise<R>): Promise<this> {
     return this;
   }
 
@@ -150,10 +150,10 @@ class Ok<O> {
    *
    * @typeParam R - The type of the value in the alternative Result
    * @typeParam F - The type of the error in the alternative Result
-   * @param _other Alternative Result (unused for Ok)
+   * @param _o Alternative Result (unused for Ok)
    * @returns Returns itself unchanged
    */
-  or<R, F>(_other: Result<R, F>): this {
+  or<R, F>(_o: Result<R, F>): this {
     return this;
   }
 
@@ -166,7 +166,7 @@ class Ok<O> {
    * @param _fn Function to compute alternative from the error (unused for Ok)
    * @returns Returns itself unchanged
    */
-  orElse<R, F>(_fn: (error: never) => Result<R, F>): this {
+  orElse<R, F>(_fn: (e: never) => Result<R, F>): this {
     return this;
   }
 
@@ -246,10 +246,10 @@ class Ok<O> {
    * Unwraps the contained value or returns the provided default.
    * For Ok instances, always returns the contained value.
    *
-   * @param _defaultValue Default value (unused for ok)
+   * @param _dv Default value (unused for ok)
    * @returns The contained value
    */
-  unwrapOr(_defaultValue: O): O {
+  unwrapOr<R>(_dv: R): O | R {
     return this.value;
   }
 
@@ -260,7 +260,7 @@ class Ok<O> {
    * @param _fn Function to compute default from error (unused for Ok)
    * @returns The contained value
    */
-  unwrapOrElse(_fn: (error: never) => O): O {
+  unwrapOrElse<R>(_fn: (e: never) => R): O | R {
     return this.value;
   }
 
@@ -268,10 +268,10 @@ class Ok<O> {
    * Unwraps the contained value. Safe for Ok instances.
    * The message parameter is ignored for Ok variants
    *
-   * @param _message Error message (unused for Ok)
+   * @param _msg Error message (unused for Ok)
    * @returns The contained value
    */
-  expect(_message: string): O {
+  expect(_msg: string): O {
     return this.value;
   }
 
@@ -329,7 +329,7 @@ class Err<E> {
    * @param _fn Function to transform the value (unused for Err)
    * @returns Returns itself unchanged
    */
-  map<R>(_fn: (value: never) => R): this {
+  map<R>(_fn: (v: never) => R): this {
     return this;
   }
 
@@ -341,7 +341,7 @@ class Err<E> {
    * @param _fn Async function to transform the value (unused for Err)
    * @returns A Promise that resolves to itself unchanged
    */
-  async mapAsync<R>(_fn: (value: never) => Promise<R>): Promise<this> {
+  async mapAsync<R>(_fn: (v: never) => Promise<R>): Promise<this> {
     return this;
   }
 
@@ -354,7 +354,7 @@ class Err<E> {
    * @param _fn Function that returns a Result (unused for Err)
    * @returns Returns itself unchanged
    */
-  andThen<R, F>(_fn: (value: never) => Result<R, F>): this {
+  andThen<R, F>(_fn: (vv: never) => Result<R, F>): this {
     return this;
   }
 
@@ -369,7 +369,7 @@ class Err<E> {
    * const result = Result.err("not found");
    * const mapped = result.mapErr((err) => `Error: ${err}`); // Err("Error: not found")
    */
-  mapErr<R>(fn: (error: E) => R): Err<R> {
+  mapErr<R>(fn: (e: E) => R): Err<R> {
     return new Err(fn(this.error));
   }
 
@@ -380,7 +380,7 @@ class Err<E> {
    * @param fn Async function to transform the error
    * @returns A Promise that resolves to a new Err containing the transformed error
    */
-  async mapErrAsync<R>(fn: (error: E) => Promise<R>): Promise<Err<R>> {
+  async mapErrAsync<R>(fn: (e: E) => Promise<R>): Promise<Err<R>> {
     return new Err(await fn(this.error));
   }
 
@@ -390,15 +390,15 @@ class Err<E> {
    *
    * @typeParam R - The type of the value in the alternative Result
    * @typeParam F - The type of the error in the alternative Result
-   * @param other Alternative Result to return
+   * @param o Alternative Result to return
    * @returns The alternative Result
    *
    * @example
    * const result = Result.err("failed");
    * const recovered = result.or(Result.ok(0)); // Ok(0)
    */
-  or<R, F>(other: Result<R, F>): Result<R, F> {
-    return other;
+  or<R, F>(o: Result<R, F>): Result<R, F> {
+    return o;
   }
 
   /**
@@ -416,7 +416,7 @@ class Err<E> {
    *   return Result.err("unknown error")
    * }); // Ok(0)
    */
-  orElse<R, F>(fn: (error: E) => Result<R, F>): Result<R, F> {
+  orElse<R, F>(fn: (e: E) => Result<R, F>): Result<R, F> {
     return fn(this.error);
   }
 
@@ -500,15 +500,15 @@ class Err<E> {
    * For Err instances, always returns the default value.
    *
    * @typeParam R - The type of the default value
-   * @param defaultValue Default value to return
+   * @param dv Default value to return
    * @returns The default value
    *
    * @example
    * const result = Result.err("failed");
    * const value = result.unwrapOr(0);
    */
-  unwrapOr<R>(defaultValue: R): R {
-    return defaultValue;
+  unwrapOr<R>(dv: R): R {
+    return dv;
   }
 
   /**
@@ -525,14 +525,14 @@ class Err<E> {
    *   return 500;
    * }); // 404
    */
-  unwrapOrElse<R>(fn: (error: E) => R): R {
+  unwrapOrElse<R>(fn: (e: E) => R): R {
     return fn(this.error);
   }
 
   /**
    * Unwraps the contained value. Throws an error with a custom message for Err instances.
    *
-   * @param message Custom error message prefix
+   * @param msg Custom error message prefix
    * @throws {Error} Always throws when called on an Err instances
    * @returns Never returns (always throws)
    *
@@ -540,8 +540,8 @@ class Err<E> {
    * const result = Result.err("failed");
    * const value = result.expect("Operation failed"); // Throws Error: "Operation failed: failed"
    */
-  expect(message: string): never {
-    throw new Error(`${message}: ${this.error}`);
+  expect(msg: string): never {
+    throw new Error(`${msg}: ${this.error}`);
   }
 
   // #endregion Unwrapping
@@ -557,19 +557,19 @@ const Result = {
    * Creates a new Ok Result containing the provided value.
    *
    * @typeParam O - The type of the value
-   * @param value The value to wrap in an Ok
+   * @param v The value to wrap in an Ok
    * @returns A new Ok instance
    */
-  ok: <O>(value: O) => new Ok(value),
+  ok: <O>(v: O) => new Ok(v),
 
   /**
    * Creates a new Err Result containing the provided error.
    *
    * @typeParam E - The type of the error
-   * @param error The error to wrap in an Err
+   * @param e The error to wrap in an Err
    * @returns A new Err instance
    */
-  err: <E>(error: E) => new Err(error),
+  err: <E>(e: E) => new Err(e),
 
   // #endregion Constructors
 
@@ -581,15 +581,15 @@ const Result = {
    *
    * @typeParam O - The type of the inner value
    * @typeParam E - The type of the error
-   * @param result The nested Result to flatten
+   * @param res The nested Result to flatten
    * @returns A flattened Result
    *
    * @example
    * const nested = Result.ok(Result.ok(42));
    * const flattened = Result.flatten(nested); // Ok(42)
    */
-  flatten: <O, E>(result: Result<Result<O, E>, E>): Result<O, E> => {
-    return result.match(
+  flatten: <O, E>(res: Result<Result<O, E>, E>): Result<O, E> => {
+    return res.match(
       (inner) => inner,
       (err) => Result.err(err)
     );
@@ -605,7 +605,7 @@ const Result = {
    *
    * @typeParam O -The type of the promise's resolved value
    * @typeParam E - The type of the error (defaults to `unknown`)
-   * @param promise The promise to convert
+   * @param p The promise to convert
    * @returns A Promise that resolves to a Result
    *
    * @example
@@ -614,11 +614,9 @@ const Result = {
    *   const data = result.value;
    * }
    */
-  fromPromise: async <O, E = unknown>(
-    promise: Promise<O>
-  ): Promise<Result<O, E>> => {
+  fromPromise: async <O, E = unknown>(p: Promise<O>): Promise<Result<O, E>> => {
     try {
-      const value = await promise;
+      const value = await p;
       return Result.ok(value);
     } catch (error) {
       return Result.err(error as E);
