@@ -2,7 +2,7 @@ import { type Component } from "solid-js";
 
 import styles from "./Error.module.css";
 
-const Error: Component<{ message: string }> = (props) => (
+const ErrorMessage: Component<{ message: string }> = (props) => (
   <div class={styles.container}>
     <div class={styles.icon}>⚠️</div>
     <h1 class={styles.title}>Error</h1>
@@ -10,4 +10,4 @@ const Error: Component<{ message: string }> = (props) => (
   </div>
 );
 
-export default Error;
+export default ErrorMessage;

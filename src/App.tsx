@@ -6,7 +6,7 @@ import { roomService } from "./services/room";
 import { ipStore } from "./stores/ip";
 import { roomsStore } from "./stores/rooms";
 import { userStore } from "./stores/user";
-import { Error, Loading } from "./components/ui";
+import { ErrorMessage, Loading } from "./components/ui";
 import { Result } from "./lib/utils";
 
 const App: Component = () => {
@@ -50,7 +50,7 @@ const App: Component = () => {
         />
       </Match>
       <Match when={hasError()}>
-        <Error
+        <ErrorMessage
           message={
             ipStore.error ?? roomsStore.error ?? "Unknown error occurred"
           }
