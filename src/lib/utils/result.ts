@@ -121,6 +121,28 @@ class Ok<O> {
   }
 
   /**
+   * Chains async operations that return Results. Also known as `flatMapAsync` or `bindAsync`.
+   * If this is an Ok, applies the async function; otherwise returns itself unchanged.
+   *
+   * @typeParam R - The type of the value in the returned Result
+   * @typeParam E - The type of the error in the returned Result
+   * @param fn Async function that returns a Result
+   * @returns A Promise that resolves to the Result returned by the function
+   *
+   * @example
+   * const result = Result.ok(5);
+   * const chained = await result.andThenAsync(async (x) => {
+   *   if (x > 0) return Result.ok(x * 2);
+   *   return Result.err("Negative number");
+   * }); // Ok(10)
+   */
+  async andThenAsync<R, E>(
+    fn: (v: O) => Promise<Result<R, E>>
+  ): Promise<Result<R, E>> {
+    return fn(this.value);
+  }
+
+  /**
    * Transforms the error value using the provided function.
    * For Ok instances, this is a no-op and returns itself.
    *
@@ -354,7 +376,22 @@ class Err<E> {
    * @param _fn Function that returns a Result (unused for Err)
    * @returns Returns itself unchanged
    */
-  andThen<R, F>(_fn: (vv: never) => Result<R, F>): this {
+  andThen<R, F>(_fn: (v: never) => Result<R, F>): this {
+    return this;
+  }
+
+  /**
+   * Chains async operations that return Results. Also known as `flatMapAsync` or `bindAsync`.
+   * For Err instances, this method does not invoke the provided function and instead returns itself unchanged, wrapped in a Promise.
+   *
+   * @typeParam R - The type of the value in the returned Result
+   * @typeParam F - The type of the error in the returned Result
+   * @param _fn Async function that returns a Result (unused for Err instances)
+   * @returns A Promise that resolves to itself unchanged
+   */
+  async andThenAsync<R, F>(
+    _fn: (v: never) => Promise<Result<R, F>>
+  ): Promise<this> {
     return this;
   }
 

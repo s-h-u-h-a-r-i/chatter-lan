@@ -7,6 +7,7 @@ import { ipStore } from "./stores/ip";
 import { roomsStore } from "./stores/rooms";
 import { userStore } from "./stores/user";
 import { Error, Loading } from "./components/ui";
+import { Result } from "./lib/utils";
 
 const App: Component = () => {
   const isLoading = () => ipStore.loading || roomsStore.loading;
@@ -14,13 +15,24 @@ const App: Component = () => {
   const isReady = () => userStore.userName !== null && ipStore.userIp !== null;
 
   onMount(async () => {
-    try {
-      await ipService.initializeUserIp();
-      await roomService.subscribeToRoomChanges();
-    } catch (error) {
+    const ipResult = await Result.fromPromise(ipService.initializeUserIp());
+    if (ipResult.isErr()) {
       // eslint-disable-next-line no-console
-      console.error(`Unexpected error occurred: ${error}`);
+      console.error(`Failed to inialize IP: ${ipResult.error}`);
+      return;
     }
+
+    const roomResult = await Result.fromPromise(
+      roomService.subscribeToRoomChanges()
+    );
+    if (roomResult.isErr()) {
+      // eslint-disable-next-line no-console
+      console.error(`Failed to subscribe to room changes: ${roomResult.error}`);
+      return;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log("App initialized");
   });
 
   onCleanup(() => {
