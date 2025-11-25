@@ -17,13 +17,14 @@ const App: Component = () => {
   onMount(async () => {
     const initErrors: unknown[] = [];
 
-    (await Result.fromPromise(ipService.initializeUserIp())).tapErr(
-      initErrors.push
-    );
-
-    (await Result.fromPromise(roomService.subscribeToRoomChanges())).tapErr(
-      initErrors.push
-    );
+    (
+      await Result.allSequential(
+        ipService.initializeUserIp(),
+        roomService.subscribeToRoomChanges()
+      )
+    ).tapErr((error) => {
+      initErrors.push(error);
+    });
 
     // eslint-disable-next-line no-console
     console.log(
