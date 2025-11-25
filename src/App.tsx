@@ -15,18 +15,21 @@ const App: Component = () => {
   const isReady = () => userStore.userName !== null && ipStore.userIp !== null;
 
   onMount(async () => {
-    (
-      await Result.allSequential(
-        ipService.initializeUserIp(),
-        roomService.subscribeToRoomChanges()
-      )
-    ).tapErr((error) => {
-      // eslint-disable-next-line no-console
-      console.error("Initialization error:", error);
-    });
+    const initErrors: unknown[] = [];
+
+    (await Result.fromPromise(ipService.initializeUserIp())).tapErr(
+      initErrors.push
+    );
+
+    (await Result.fromPromise(roomService.subscribeToRoomChanges())).tapErr(
+      initErrors.push
+    );
 
     // eslint-disable-next-line no-console
-    console.log("App initialized");
+    console.log(
+      `App initialized${initErrors.length ? ` with errors:` : ""}`,
+      initErrors.length ? initErrors : undefined
+    );
   });
 
   onCleanup(() => {
