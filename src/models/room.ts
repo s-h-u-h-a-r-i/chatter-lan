@@ -1,5 +1,6 @@
 import { DocumentData, DocumentSnapshot } from "firebase/firestore";
 
+import { Result } from "@/lib/utils";
 import { FirestoreDocument } from "./firestore-document";
 
 interface RoomData {
@@ -22,6 +23,18 @@ class FirestoreRoomDocument extends FirestoreDocument implements RoomData {
     this.name = docData.name;
   }
 
+  static from(
+    snapshot: DocumentSnapshot
+  ): Result<FirestoreRoomDocument, Error> {
+    try {
+      return Result.ok(new FirestoreRoomDocument(snapshot));
+    } catch (error) {
+      return Result.err(
+        error instanceof Error ? error : new Error(String(error))
+      );
+    }
+  }
+
   toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
@@ -36,4 +49,4 @@ class FirestoreRoomDocument extends FirestoreDocument implements RoomData {
   }
 }
 
-export { type RoomData, FirestoreRoomDocument };
+export { FirestoreRoomDocument, type RoomData };

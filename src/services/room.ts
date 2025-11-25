@@ -43,16 +43,18 @@ export class RoomService {
   }
 
   #handleRoomDocumentChange = (change: DocumentChange): void => {
-    const errorMsg = `Failed to convert room document ${change.doc.ref.path}:`;
-
     switch (change.type) {
       case "added":
       case "modified": {
-        try {
-          roomsStore.addRoom(new FirestoreRoomDocument(change.doc));
-        } catch (error) {
+        const result = FirestoreRoomDocument.from(change.doc);
+        if (result.isOk()) {
+          roomsStore.addRoom(result.value);
+        } else {
           // eslint-disable-next-line no-console
-          console.warn(errorMsg, error);
+          console.warn(
+            `Failed to convert room document ${change.doc.ref.path}:`,
+            result.error
+          );
         }
         break;
       }
