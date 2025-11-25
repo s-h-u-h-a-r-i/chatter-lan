@@ -252,6 +252,32 @@ class Ok<O> {
   // #region Unwrapping
 
   /**
+   * Returns the contained value for Ok instances.
+   *
+   * @returns The contained value.
+   *
+   * @example
+   * const result = Result.ok(42);
+   * const value = result.ok(); // 42
+   */
+  ok(): O {
+    return this.value;
+  }
+
+  /**
+   * Returns undefined for Ok instances, since there is no error.
+   *
+   * @returns Always undefined.
+   *
+   * @example
+   * const result = Result.ok(42);
+   * const error = result.err(); // undefined
+   */
+  err(): undefined {
+    return undefined;
+  }
+
+  /**
    * Unwraps the contained value. Safe for Ok instances.
    *
    * @returns The contained value
@@ -515,6 +541,32 @@ class Err<E> {
   // #endregion Side Effects
 
   // #region Unwrapping
+
+  /**
+   * Returns the contained Ok value, or undefined if this is an Err.
+   *
+   * @returns {undefined} Always returns undefined for Err instances.
+   *
+   * @example
+   * const result = Result.err("error");
+   * const value = result.ok(); // undefined
+   */
+  ok(): undefined {
+    return undefined;
+  }
+
+  /**
+   * Returns the contained error value.
+   *
+   * @returns {E} The error associated with this Err instance.
+   *
+   * @example
+   * const result = Result.err("error");
+   * const error = result.err(); // "error"
+   */
+  err(): E {
+    return this.error;
+  }
 
   /**
    * Unwraps the contained value. Throws an error for Err instances.

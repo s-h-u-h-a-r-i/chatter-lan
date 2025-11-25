@@ -31,7 +31,7 @@ export class RoomService {
       .tapErr((error) => {
         roomsStore.error = error.message;
       })
-      .unwrapOr(undefined);
+      .ok();
 
     roomsStore.loading = false;
   }
