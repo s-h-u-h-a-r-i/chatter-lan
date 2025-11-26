@@ -712,38 +712,6 @@ const Result = {
     }
   },
 
-  /**
-   * Sequentially awaits multiple promises and returns a Result containing either
-   * an array of all resolved values or the firts error encountered.
-   *
-   * @typeParam T - Tuple type representing the types of each promise
-   * @param promises Variadic promises to await sequentially
-   * @returns A Promise that resolves to a Result containing the array of values or an error
-   *
-   * @example
-   * const result = await Result.allSequential(
-   *   fetchUser(1),
-   *   fetchUser(2),
-   *   fetchUser(3)
-   * );
-   * if (result.isOk()) {
-   *   const [user1, user2, user3] = result.value;
-   * }
-   */
-  allSequential: async <O extends unknown[]>(
-    ...promises: { [K in keyof O]: Promise<O[K]> }
-  ): Promise<Result<O, unknown>> => {
-    try {
-      const results = [] as unknown as O;
-      for (let i = 0; i < promises.length; i++) {
-        results[i] = await promises[i];
-      }
-      return Result.ok(results);
-    } catch (error) {
-      return Result.err(error);
-    }
-  },
-
   // #endregion Async
 };
 

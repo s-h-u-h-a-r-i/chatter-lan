@@ -7,7 +7,6 @@ import { ipStore } from "./stores/ip";
 import { roomsStore } from "./stores/rooms";
 import { userStore } from "./stores/user";
 import { ErrorMessage, Loading } from "./components/ui";
-import { Result } from "./lib/utils";
 
 const App: Component = () => {
   const isLoading = () => ipStore.loading || roomsStore.loading;
@@ -15,22 +14,16 @@ const App: Component = () => {
   const isReady = () => userStore.userName !== null && ipStore.userIp !== null;
 
   onMount(async () => {
-    const initErrors: unknown[] = [];
-
-    (
-      await Result.allSequential(
-        ipService.initializeUserIp(),
-        roomService.subscribeToRoomChanges()
-      )
-    ).tapErr((error) => {
-      initErrors.push(error);
-    });
-
-    // eslint-disable-next-line no-console
-    console.log(
-      `App initialized${initErrors.length ? ` with errors:` : ""}`,
-      initErrors.length ? initErrors : undefined
-    );
+    try {
+      await ipService.initializeUserIp();
+      await roomService.subscribeToRoomChanges();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `App initialization failed`,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
   });
 
   onCleanup(() => {
