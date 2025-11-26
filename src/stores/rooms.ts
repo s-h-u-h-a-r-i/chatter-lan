@@ -8,6 +8,8 @@ type RoomsState = {
   error: string | null;
 };
 
+type RoomsStore = typeof roomsStore;
+
 const [state, setState] = createStore<RoomsState>({
   rooms: [],
   loading: true,
@@ -52,4 +54,4 @@ const roomsStore = {
   },
 };
 
-export { roomsStore };
+export { roomsStore, type RoomsStore };

@@ -1,26 +1,28 @@
 import { IpRepository } from "@/repositories/ip";
-import { ipStore } from "@/stores/ip";
+import { IpStore, ipStore } from "@/stores/ip";
 
 export class IpService {
   #ipRepository: IpRepository;
+  #ipStore: IpStore;
 
-  constructor() {
-    this.#ipRepository = new IpRepository();
+  constructor(ipRepository: IpRepository, ipStore: IpStore) {
+    this.#ipRepository = ipRepository;
+    this.#ipStore = ipStore;
   }
 
   async initializeUserIp(): Promise<void> {
-    ipStore.reset();
+    this.#ipStore.reset();
 
     (await this.#ipRepository.getPublicIp())
       .tap((ip) => {
-        ipStore.userIp = ip;
+        this.#ipStore.userIp = ip;
       })
       .tapErr((error) => {
-        ipStore.error = error.message;
+        this.#ipStore.error = error.message;
       });
 
-    ipStore.loading = false;
+    this.#ipStore.loading = false;
   }
 }
 
-export const ipService = new IpService();
+export const ipService = new IpService(new IpRepository(), ipStore);

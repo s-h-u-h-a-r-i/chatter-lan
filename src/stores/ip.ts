@@ -6,6 +6,8 @@ type IpState = {
   error: string | null;
 };
 
+type IpStore = typeof ipStore;
+
 function isValidIp(ip: string): boolean {
   const ipv4Pattern =
     /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -52,4 +54,4 @@ const ipStore = {
   },
 };
 
-export { ipStore };
+export { ipStore, type IpStore };
