@@ -25,6 +25,12 @@ export class RoomService {
   async subscribeToRoomChanges(): Promise<void> {
     this.cleanup();
 
+    if (this.#ipStore.userIp === null) {
+      this.#roomsStore.error = "IP address not available";
+      this.#roomsStore.loading = false;
+      return;
+    }
+
     this.#unsubscribe = (
       await Result.fromPromise(
         this.#roomRepository.onRoomChangesByIp(

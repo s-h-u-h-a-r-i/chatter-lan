@@ -10,10 +10,10 @@ import { firestore } from "@/config/firebase";
 
 export class RoomRepository {
   async onRoomChangesByIp(
-    ip: string | null,
+    ip: string,
     callback: (change: DocumentChange<DocumentData, DocumentData>) => void
   ): Promise<Unsubscribe> {
-    if (ip === null || ip.trim() === "") {
+    if (ip.trim() === "") {
       throw new Error("A non-empty IP string must be provided");
     }
 
