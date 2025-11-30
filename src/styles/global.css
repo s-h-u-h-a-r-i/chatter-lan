@@ -2,7 +2,7 @@
 @import "./_theme.css";
 @import "./_utilities.css";
 @import "./_ui.css";
-@import "./_components.css";
+@import "./components/imports.css";
 
 /* Root & Body Base Styles */
 html {
@@ -26,11 +26,11 @@ body {
 
 /* Ensure the root element fills available space */
 #root {
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   width: 100vw;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 }
 
 /* Typography Scale - Smoky Gray */
