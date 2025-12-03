@@ -7,7 +7,7 @@ import { ipStore, IpStore } from "@/stores/ip";
 import { roomsStore, RoomsStore } from "@/stores/rooms";
 import { selectedRoomStore, SelectedRoomStore } from "@/stores/selected-room";
 
-export class RoomService {
+class RoomService {
   #roomRepository: RoomRepository;
   #roomsStore: RoomsStore;
   #selectedRoomStore: SelectedRoomStore;
@@ -85,9 +85,11 @@ export class RoomService {
   };
 }
 
-export const roomService = new RoomService(
+const roomService = new RoomService(
   new RoomRepository(),
   roomsStore,
   selectedRoomStore,
   ipStore
 );
+
+export { type RoomService, roomService };

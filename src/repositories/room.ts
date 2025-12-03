@@ -8,7 +8,7 @@ import {
 
 import { firestore } from "@/config/firebase";
 
-export class RoomRepository {
+class RoomRepository {
   async onRoomChangesByIp(
     ip: string,
     callback: (change: DocumentChange<DocumentData, DocumentData>) => void
@@ -26,3 +26,5 @@ export class RoomRepository {
     });
   }
 }
+
+export { RoomRepository };

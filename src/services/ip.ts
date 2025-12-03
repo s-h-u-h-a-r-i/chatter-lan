@@ -1,7 +1,7 @@
 import { IpRepository } from "@/repositories/ip";
 import { IpStore, ipStore } from "@/stores/ip";
 
-export class IpService {
+class IpService {
   #ipRepository: IpRepository;
   #ipStore: IpStore;
 
@@ -25,4 +25,6 @@ export class IpService {
   }
 }
 
-export const ipService = new IpService(new IpRepository(), ipStore);
+const ipService = new IpService(new IpRepository(), ipStore);
+
+export { type IpService, ipService };

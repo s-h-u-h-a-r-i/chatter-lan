@@ -1,6 +1,6 @@
 import { Result } from "@/lib/utils";
 
-export class IpRepository {
+class IpRepository {
   async getPublicIp(): Promise<Result<string, Error>> {
     return Result.fromPromise<string, Error>(
       fetch("https://api.ipify.org?format=json")
@@ -13,3 +13,5 @@ export class IpRepository {
     );
   }
 }
+
+export { IpRepository };
