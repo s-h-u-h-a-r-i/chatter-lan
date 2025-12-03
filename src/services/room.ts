@@ -5,20 +5,24 @@ import { FirestoreRoomDocument } from "@/models/room";
 import { RoomRepository } from "@/repositories/room";
 import { ipStore, IpStore } from "@/stores/ip";
 import { roomsStore, RoomsStore } from "@/stores/rooms";
+import { selectedRoomStore, SelectedRoomStore } from "@/stores/selected-room";
 
 export class RoomService {
   #roomRepository: RoomRepository;
   #roomsStore: RoomsStore;
+  #selectedRoomStore: SelectedRoomStore;
   #ipStore: IpStore;
   #unsubscribe?: Unsubscribe;
 
   constructor(
     roomRepository: RoomRepository,
     roomsStore: RoomsStore,
+    selectedRoomStore: SelectedRoomStore,
     ipStore: IpStore
   ) {
     this.#roomRepository = roomRepository;
     this.#roomsStore = roomsStore;
+    this.#selectedRoomStore = selectedRoomStore;
     this.#ipStore = ipStore;
   }
 
@@ -54,6 +58,7 @@ export class RoomService {
     this.#unsubscribe?.();
     this.#unsubscribe = undefined;
     this.#roomsStore.reset();
+    this.#selectedRoomStore.clearSelection();
   }
 
   #handleRoomDocumentChange = (change: DocumentChange): void => {
@@ -74,6 +79,7 @@ export class RoomService {
       }
       case "removed": {
         this.#roomsStore.removeRoom(change.doc.ref.id);
+        break;
       }
     }
   };
@@ -82,5 +88,6 @@ export class RoomService {
 export const roomService = new RoomService(
   new RoomRepository(),
   roomsStore,
+  selectedRoomStore,
   ipStore
 );
