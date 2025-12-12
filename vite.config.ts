@@ -5,15 +5,15 @@ import path from "path";
 
 export default defineConfig({
   plugins: [devtools(), solidPlugin()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   server: {
     port: 3000,
   },
   build: {
     target: "esnext",
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
   },
 });

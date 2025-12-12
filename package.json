@@ -11,21 +11,13 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@types/node": "^24.10.1",
-    "@typescript-eslint/eslint-plugin": "^8.46.4",
-    "@typescript-eslint/parser": "^8.46.4",
-    "eslint": "^9.39.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-solid": "^0.14.5",
-    "globals": "^16.5.0",
     "solid-devtools": "^0.34.3",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.46.4",
     "vite": "^7.1.4",
     "vite-plugin-solid": "^2.11.8"
   },
   "dependencies": {
+    "@solidjs/router": "^0.15.4",
     "firebase": "^12.6.0",
     "solid-js": "^1.9.5"
   }
