@@ -11,7 +11,7 @@ app.config.timestamp_*.js
 .env*.local
 
 # Firebase config
-src/config/firebase.ts
+src/lib/firebase/firebase.ts
 
 # dependencies
 /node_modules
