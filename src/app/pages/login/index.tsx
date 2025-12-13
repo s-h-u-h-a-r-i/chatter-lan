@@ -1,7 +1,7 @@
-import { Component } from "solid-js";
+import { Component } from 'solid-js';
 
-import { useUserStore } from "@/stores/user";
-import LoginCard from "./LoginCard";
+import { useUserStore } from '@/stores/user';
+import { LoginCard } from './components';
 
 const Login: Component = () => {
   const [userStoreState, userStoreActions] = useUserStore();
@@ -9,11 +9,11 @@ const Login: Component = () => {
   return (
     <main
       style={{
-        display: "flex",
-        "flex-direction": "column",
+        display: 'flex',
+        'flex-direction': 'column',
         flex: 1,
-        "justify-content": "center",
-        "align-items": "center",
+        'justify-content': 'center',
+        'align-items': 'center',
       }}>
       <LoginCard
         username={userStoreState.username}

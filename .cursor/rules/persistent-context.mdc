@@ -2,5 +2,15 @@
 alwaysApply: true
 ---
 
-- Use color vars from this file only: @src/styles/\_theme.css
-- Default element styles are in @src/styles/global.css
+### Theme Guidelines:
+
+- Use color variables exclusively from: [\_theme.css](/src/styles/_theme.css)
+- Import all CSS and apply default element styles in: [globals.css](/src/styles/global.css)
+
+### Project Structure Guidelines:
+
+- Place feature-specific logic in `/src/app/pages/`
+- Place universally shareable logic in `/src/lib/`
+- Organize feature logic further within `/src/app/pages/[feature]/components/` or `/src/app/pages/[feature]/types/`
+- Put reusable generic components in `/src/components/`
+- Store global application state in `/src/store/`

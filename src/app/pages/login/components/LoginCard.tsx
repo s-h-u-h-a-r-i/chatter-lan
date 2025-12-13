@@ -1,6 +1,6 @@
-import { Component, createSignal, onMount } from "solid-js";
+import { Component, createSignal, onMount } from 'solid-js';
 
-import styles from "./LoginCard.module.css";
+import styles from './LoginCard.module.css';
 
 interface LoginCardProps {
   username: string | null;
@@ -8,10 +8,10 @@ interface LoginCardProps {
 }
 
 const LoginCard: Component<LoginCardProps> = (props) => {
-  const [input, setInput] = createSignal<string>("");
+  const [input, setInput] = createSignal<string>('');
 
   onMount(() => {
-    setInput(props.username ?? "");
+    setInput(props.username ?? '');
   });
 
   const saveUsername = (e: Event) => {
@@ -36,7 +36,7 @@ const LoginCard: Component<LoginCardProps> = (props) => {
         value={input()}
         onInput={(e) => setInput(e.currentTarget.value)}
         onKeyPress={(e) => {
-          if (e.key === "Enter") {
+          if (e.key === 'Enter') {
             saveUsername(e);
           }
         }}
@@ -51,4 +51,4 @@ const LoginCard: Component<LoginCardProps> = (props) => {
   );
 };
 
-export default LoginCard;
+export { LoginCard };
