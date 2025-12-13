@@ -1,7 +1,7 @@
-import { useLocation, useNavigate } from "@solidjs/router";
-import { createEffect, Suspense, type ParentComponent } from "solid-js";
+import { useLocation, useNavigate } from '@solidjs/router';
+import { createEffect, Suspense, type ParentComponent } from 'solid-js';
 
-import { UserStoreProvider, useUserStore } from "@/stores/user";
+import { UserStoreProvider, useUserStore } from '@/stores/user';
 
 const AppContent: ParentComponent = (props) => {
   const [userState] = useUserStore();
@@ -9,11 +9,13 @@ const AppContent: ParentComponent = (props) => {
   const location = useLocation();
 
   createEffect(() => {
-    if (!userState.username && location.pathname !== "/login") {
-      navigate("/login", { replace: true });
-    }
-    if (userState.username && location.pathname === "/login") {
-      navigate("/", { replace: true });
+    const isLoggedIn = !!userState.username;
+    const isOnLogin = location.pathname === '/login';
+
+    if (!isLoggedIn && !isOnLogin) {
+      navigate('/login', { replace: true });
+    } else if (isLoggedIn && isOnLogin) {
+      navigate('/', { replace: true });
     }
   });
 
