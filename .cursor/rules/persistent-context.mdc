@@ -14,3 +14,10 @@ alwaysApply: true
 - Organize feature logic further within `/src/app/pages/[feature]/components/` or `/src/app/pages/[feature]/types/`
 - Put reusable generic components in `/src/components/`
 - Store global application state in `/src/store/`
+
+### Code Quality & Refactoring Guidelines:
+
+- **Consider architectural improvements**: Don't just match existing patterns—suggest improvements that prevent future issues
+- **Think ahead**: Consider edge cases and potential conflicts
+- **Prefer abstraction**: When multiple similar patterns exist, suggest generic or abstract solutions that reduce duplication
+- **Balance simplicity with robustness**: Simple code is good, but not at the expense of type safety or maintainability
