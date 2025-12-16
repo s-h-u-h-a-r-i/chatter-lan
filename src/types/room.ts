@@ -1,3 +1,3 @@
-export type RoomData = {
+export interface RoomData {
   name: string;
-};
+}
