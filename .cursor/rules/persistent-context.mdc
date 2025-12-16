@@ -4,8 +4,8 @@ alwaysApply: true
 
 ### Theme Guidelines:
 
-- Use color variables exclusively from: [\_theme.css](/src/styles/_theme.css)
-- Import all CSS and apply default element styles in: [globals.css](/src/styles/global.css)
+- Use color variables exclusively from: [\_colors.css](/src/styles/_colors.css)
+- Import all CSS and apply default element styles in: [index.css](/src/styles/index.css)
 
 ### Project Structure Guidelines:
 
