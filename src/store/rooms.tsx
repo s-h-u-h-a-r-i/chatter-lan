@@ -17,9 +17,8 @@ interface RoomsState {
 interface RoomsActions {
   setLoading(loading: boolean): void;
   setError(error: string | null): void;
-  addRoom(room: RoomEntry): void;
+  upsertRoom(entry: RoomEntry): void;
   removeRoom(id: string): void;
-  findRoomById(id: string): RoomEntry | null;
 }
 
 const RoomsStoreContext = createContext<[RoomsState, RoomsActions]>();
@@ -31,13 +30,6 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     error: null,
   });
 
-  /**
-   * ### Locate a room entry and its index by identifier
-   * Addr\esses the need to efficiently access both the position and data
-   * of a specific room in the current state using its unique identifier.
-   *
-   * @param id Unique identifier for the room to locate
-   */
   const findRoomIndexAndEntry = (id: string): [number, RoomEntry] | null => {
     const rooms = state.rooms;
     const index = rooms.findIndex((room) => room.id === id);
@@ -53,14 +45,23 @@ const RoomsStoreProvider: ParentComponent = (props) => {
       setState('error', error);
     },
 
-    addRoom(room) {
-      const existingRoom = findRoomIndexAndEntry(room.id);
+    upsertRoom(entry) {
+      setState('rooms', (rooms) => {
+        const index = rooms.findIndex((r) => r.id === entry.id);
+        if (index < 0) {
+          return [...rooms, entry];
+        } else {
+          return [...rooms.slice(0, index), entry, ...rooms.slice(index + 1)];
+        }
+      });
+    },
 
-      if (existingRoom === null) {
-        setState('rooms', state.rooms.length, room);
-      } else {
-        setState('rooms', existingRoom[0], room);
-      }
+    removeRoom(id) {
+      setState('rooms', (rooms) => {
+        const index = rooms.findIndex((room) => room.id === id);
+        if (index < 0) return rooms;
+        return [...rooms.slice(0, index), ...rooms.slice(index + 1)];
+      });
     },
   };
 
