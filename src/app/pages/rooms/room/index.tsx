@@ -1,6 +1,7 @@
-import { useRoomsStore } from '@/store/rooms';
 import { useParams } from '@solidjs/router';
 import { Component, onMount } from 'solid-js';
+
+import { useRoomsStore } from '@/store/rooms';
 
 const Room: Component = () => {
   const params = useParams();
@@ -12,7 +13,11 @@ const Room: Component = () => {
 
   return (
     <div>
-      <h3>{params.id ? `Room: ${roomsStore.selectedRoom}` : 'Select Room'}</h3>
+      <h3>
+        {roomsStore.selectedRoom
+          ? `Room: ${roomsStore.selectedRoom}`
+          : 'Select Room'}
+      </h3>
     </div>
   );
 };

@@ -1,6 +1,8 @@
-import { RoomsStoreProvider } from '@/store/rooms';
 import { useNavigate } from '@solidjs/router';
 import { createEffect, type ParentComponent } from 'solid-js';
+
+import { RoomsStoreProvider } from '@/store/rooms';
+import { UserStoreProvider } from '@/store/user';
 
 const App: ParentComponent = (props) => {
   const navigate = useNavigate();
@@ -11,7 +13,11 @@ const App: ParentComponent = (props) => {
     }
   });
 
-  return <RoomsStoreProvider>{props.children}</RoomsStoreProvider>;
+  return (
+    <UserStoreProvider>
+      <RoomsStoreProvider>{props.children}</RoomsStoreProvider>;
+    </UserStoreProvider>
+  );
 };
 
 export default App;
