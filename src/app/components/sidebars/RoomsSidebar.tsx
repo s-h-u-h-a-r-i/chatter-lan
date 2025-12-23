@@ -1,6 +1,7 @@
 import { BookUser } from 'lucide-solid';
 import { Component } from 'solid-js';
 
+import { BookUser, Search } from '@/lib/icons';
 import styles from './shared.module.css';
 
 export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {

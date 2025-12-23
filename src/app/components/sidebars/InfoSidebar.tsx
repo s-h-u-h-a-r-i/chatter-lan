@@ -1,6 +1,6 @@
 import { Component } from 'solid-js';
 
-import { Info } from 'lucide-solid';
+import { Info } from '@/lib/icons';
 import styles from './shared.module.css';
 
 const EmptyInfoState: Component = () => {
