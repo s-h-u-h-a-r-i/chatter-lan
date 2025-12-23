@@ -1,7 +1,15 @@
-import { ParentComponent } from 'solid-js';
+import { Component } from 'solid-js';
 
-const App: ParentComponent = (props) => {
-  return props.children;
+import styles from './App.module.css';
+import { InfoSidebar, RoomsSidebar } from './components';
+
+const App: Component = (props) => {
+  return (
+    <div class={styles.app}>
+      <RoomsSidebar />
+      <InfoSidebar />
+    </div>
+  );
 };
 
 export default App;

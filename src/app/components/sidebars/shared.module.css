@@ -1,0 +1,18 @@
+.sidebar {
+  width: 280px;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-secondary) 0%,
+    rgba(var(--color-surface-rgb), 0.3) 100%
+  );
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-out;
+}
+
+.roomsSidebar {
+  border-right: 1px solid rgba(var(--color-surface-rgb), 0.3);
+  box-shadow: 2px 0 12px rgba(var(--color-text-primary-rgb), 0.04);
+}
