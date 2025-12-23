@@ -20,8 +20,4 @@ const fsPaths = {
   },
 } as const;
 
-function getRoomPath(ip: string, roomId: string) {
-  return fsPaths.rooms.ips.collection(ip).doc(roomId).path;
-}
-
-export { fsPaths, getRoomPath };
+export { fsPaths };

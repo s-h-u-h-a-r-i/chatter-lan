@@ -1,7 +1,16 @@
-import { createContext, ParentComponent, useContext } from 'solid-js';
+import {
+  createContext,
+  createEffect,
+  onCleanup,
+  ParentComponent,
+  useContext,
+} from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
+import { firestore, fsPaths } from '@/lib/firebase';
 import { RoomData } from '@/types/room';
+import { collection, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import { useUserStore } from '../user';
 
 interface RoomsState {
   rooms: RoomData[];
@@ -25,14 +34,6 @@ class RoomsStore {
 
   get error(): string | null {
     return this.state.error;
-  }
-
-  set loading(loading: boolean) {
-    this.setState('loading', loading);
-  }
-
-  set error(msg: string | null) {
-    this.setState('error', msg);
   }
 
   upsertRoom(room: RoomData): void {
@@ -60,6 +61,50 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     rooms: [],
     loading: true,
     error: null,
+  });
+  const userStore = useUserStore();
+  let unsubscribe: Unsubscribe | null = null;
+
+  createEffect(() => {
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
+
+    if (!userStore.ip || userStore.loading || userStore.error) {
+      setState({ loading: false, error: userStore.error });
+      return;
+    }
+
+    setState({ loading: true, error: null });
+
+    const roomsRef = collection(
+      firestore,
+      fsPaths.rooms.ips.collection(userStore.ip).path
+    );
+
+    unsubscribe = onSnapshot(
+      roomsRef,
+      (snapshot) => {
+        const rooms: RoomData[] = [];
+        snapshot.forEach((doc) => {
+          rooms.push({
+            id: doc.id,
+            ...doc.data(),
+          } as RoomData);
+        });
+        setState({ rooms, loading: false, error: null });
+      },
+      (error) => {
+        setState({ loading: false, error: error.message });
+      }
+    );
+  });
+
+  onCleanup(() => {
+    if (unsubscribe) {
+      unsubscribe();
+    }
   });
 
   const context = new RoomsStore(state, setState);
