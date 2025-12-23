@@ -1,0 +1,16 @@
+:root {
+  --color-bg-primary: #f9f8f6;
+  --color-bg-primary-rgb: 249, 248, 246;
+
+  --color-bg-secondary: #efe9e3;
+  --color-bg-secondary-rgb: 239, 233, 227;
+
+  --color-surface: #d9cfc7;
+  --color-surface-rgb: 217, 207, 199;
+
+  --color-accent-soft: #c9b59c;
+  --color-accent-soft-rgb: 201, 181, 156;
+
+  --color-text-primary: #2c2416;
+  --color-text-primary-rgb: 44, 36, 22;
+}
