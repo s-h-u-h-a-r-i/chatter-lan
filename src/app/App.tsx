@@ -1,7 +1,7 @@
 import { Component, createSignal } from 'solid-js';
 
-import { RoomsStoreProvider } from '@/stores/rooms';
-import { UserStoreProvider } from '@/stores/user';
+import { RoomsStoreProvider } from '@/lib/rooms';
+import { UserStoreProvider } from '@/lib/user';
 
 import styles from './App.module.css';
 import { ChatArea, InfoSidebar, RoomsSidebar } from './components';

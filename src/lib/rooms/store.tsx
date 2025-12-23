@@ -1,3 +1,4 @@
+import { Unsubscribe } from 'firebase/firestore';
 import {
   createContext,
   createEffect,
@@ -7,13 +8,13 @@ import {
 } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
-import { firestore, fsPaths } from '@/lib/firebase';
 import { RoomData } from '@/types/room';
-import { collection, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { useUserStore } from '../user';
+import { subscribeToRooms } from './repository';
 
 interface RoomsState {
   rooms: RoomData[];
+  selectedRoomId: string | null;
   loading: boolean;
   error: string | null;
 }
@@ -25,7 +26,13 @@ class RoomsStore {
   ) {}
 
   get rooms(): ReadonlyArray<RoomData> {
-    return Object.freeze(this.state.rooms);
+    return this.state.rooms;
+  }
+
+  get selectedRoom(): Readonly<RoomData> | null {
+    return (
+      this.state.rooms.find((r) => r.id === this.state.selectedRoomId) ?? null
+    );
   }
 
   get loading(): boolean {
@@ -34,6 +41,10 @@ class RoomsStore {
 
   get error(): string | null {
     return this.state.error;
+  }
+
+  setSelectedRoomId(id: string) {
+    this.setState('selectedRoomId', id);
   }
 
   upsertRoom(room: RoomData): void {
@@ -59,6 +70,7 @@ const RoomsStoreContext = createContext<RoomsStore>();
 const RoomsStoreProvider: ParentComponent = (props) => {
   const [state, setState] = createStore<RoomsState>({
     rooms: [],
+    selectedRoomId: null,
     loading: true,
     error: null,
   });
@@ -78,25 +90,13 @@ const RoomsStoreProvider: ParentComponent = (props) => {
 
     setState({ loading: true, error: null });
 
-    const roomsRef = collection(
-      firestore,
-      fsPaths.rooms.ips.collection(userStore.ip).path
-    );
-
-    unsubscribe = onSnapshot(
-      roomsRef,
-      (snapshot) => {
-        const rooms: RoomData[] = [];
-        snapshot.forEach((doc) => {
-          rooms.push({
-            id: doc.id,
-            ...doc.data(),
-          } as RoomData);
-        });
+    unsubscribe = subscribeToRooms(
+      userStore.ip,
+      (rooms) => {
         setState({ rooms, loading: false, error: null });
       },
       (error) => {
-        setState({ loading: false, error: error.message });
+        setState({ loading: false, error: error });
       }
     );
   });
@@ -107,10 +107,8 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     }
   });
 
-  const context = new RoomsStore(state, setState);
-
   return (
-    <RoomsStoreContext.Provider value={context}>
+    <RoomsStoreContext.Provider value={new RoomsStore(state, setState)}>
       {props.children}
     </RoomsStoreContext.Provider>
   );

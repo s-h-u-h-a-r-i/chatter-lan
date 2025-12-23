@@ -1,5 +1,6 @@
 import { createContext, onMount, ParentComponent, useContext } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
+import { fetchPublicIp } from './service';
 
 interface UserState {
   ip: string | null;
@@ -33,38 +34,6 @@ class UserStore {
 
 const UserStoreContext = createContext<UserStore>();
 
-async function fetchPublicIP(): Promise<string> {
-  const services = [
-    'https://api.ipify.org?format=json',
-    'https://api64.ipify.org?format=json',
-    'https://ipapi.co/json/',
-  ] as const;
-
-  for (const url of services) {
-    try {
-      const response = await fetch(url, {
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (!response.ok) {
-        continue;
-      }
-
-      const data = await response.json();
-      const ip = data.ip || data.query;
-
-      if (ip && typeof ip === 'string') {
-        return ip;
-      }
-    } catch (error) {
-      // * Try next service
-      continue;
-    }
-  }
-
-  throw new Error(`Failed to fetch IP from ${services.length} services`);
-}
-
 const UserStoreProvider: ParentComponent = (props) => {
   const [state, setState] = createStore<UserState>({
     ip: null,
@@ -75,7 +44,7 @@ const UserStoreProvider: ParentComponent = (props) => {
 
   onMount(async () => {
     try {
-      const ip = await fetchPublicIP();
+      const ip = await fetchPublicIp();
       setState({ ip, loading: false, error: null });
     } catch (error) {
       setState({
@@ -85,10 +54,8 @@ const UserStoreProvider: ParentComponent = (props) => {
     }
   });
 
-  const context = new UserStore(state, setState);
-
   return (
-    <UserStoreContext.Provider value={context}>
+    <UserStoreContext.Provider value={new UserStore(state, setState)}>
       {props.children}
     </UserStoreContext.Provider>
   );
