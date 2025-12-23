@@ -1,5 +1,6 @@
 import { Component, createSignal } from 'solid-js';
 
+import { RoomsStoreProvider } from '@/stores/rooms';
 import styles from './App.module.css';
 import { ChatArea, InfoSidebar, RoomsSidebar } from './components';
 
@@ -12,9 +13,11 @@ const App: Component = (props) => {
 
   return (
     <div class={styles.app}>
-      <RoomsSidebar isOpen={roomsSidebarOpen()} />
-      <ChatArea />
-      <InfoSidebar isOpen={infoSidebarOpen()} />
+      <RoomsStoreProvider>
+        <RoomsSidebar isOpen={roomsSidebarOpen()} />
+        <ChatArea />
+        <InfoSidebar isOpen={infoSidebarOpen()} />
+      </RoomsStoreProvider>
     </div>
   );
 };
