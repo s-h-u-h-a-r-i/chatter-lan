@@ -1,7 +1,7 @@
+import { createContext, ParentComponent, useContext } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
 import { RoomData } from '@/types/room';
-import { createContext, ParentComponent, useContext } from 'solid-js';
 
 interface RoomsState {
   rooms: RoomData[];
