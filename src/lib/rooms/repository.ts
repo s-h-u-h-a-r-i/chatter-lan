@@ -11,6 +11,7 @@ import { firestore, fsPaths } from '../firebase';
 export function subscribeToRooms(
   ip: string,
   onUpdate: (rooms: RoomData[]) => void,
+  onRemove: (roomIds: string[]) => void,
   onError: (error: string) => void
 ): Unsubscribe {
   const roomsRef = collection(firestore, fsPaths.rooms.ips.collection(ip).path);
@@ -18,16 +19,29 @@ export function subscribeToRooms(
   return onSnapshot(
     roomsRef,
     (snapshot) => {
-      const rooms: RoomData[] = [];
-      snapshot.forEach((docSnap) => {
-        try {
-          const converted = toRoomData(docSnap);
-          rooms.push(converted);
-        } catch (error) {
-          console.warn('Failed to convert room:', error);
+      const roomsToUpsert: RoomData[] = [];
+      const roomsToRemove: string[] = [];
+      snapshot.docChanges().forEach((change) => {
+        switch (change.type) {
+          case 'added':
+          case 'modified':
+            try {
+              const converted = toRoomData(change.doc);
+              roomsToUpsert.push(converted);
+            } catch (error) {
+              console.warn('Failed to convert room:', error);
+            }
+            break;
+          case 'removed':
+            roomsToRemove.push(change.doc.id);
+            break;
+          default:
+            console.warn(`New change type (${change.type}) added?`);
+            break;
         }
       });
-      onUpdate(rooms);
+      if (roomsToUpsert.length > 0) onUpdate(roomsToUpsert);
+      if (roomsToRemove.length > 0) onRemove(roomsToRemove);
     },
     (error) => {
       onError(error.message);

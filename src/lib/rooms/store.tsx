@@ -77,6 +77,8 @@ const RoomsStoreProvider: ParentComponent = (props) => {
   const userStore = useUserStore();
   let unsubscribe: Unsubscribe | null = null;
 
+  const roomsStore = new RoomsStore(state, setState);
+
   createEffect(() => {
     if (unsubscribe) {
       unsubscribe();
@@ -93,12 +95,19 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     unsubscribe = subscribeToRooms(
       userStore.ip,
       (rooms) => {
-        setState({ rooms, loading: false, error: null });
+        setState('rooms', rooms);
+      },
+      (roomIds) => {
+        roomIds.forEach((id) => {
+          roomsStore.removeRoom(id);
+        });
       },
       (error) => {
-        setState({ loading: false, error: error });
+        setState('error', error);
       }
     );
+
+    setState('loading', false);
   });
 
   onCleanup(() => {
@@ -108,7 +117,7 @@ const RoomsStoreProvider: ParentComponent = (props) => {
   });
 
   return (
-    <RoomsStoreContext.Provider value={new RoomsStore(state, setState)}>
+    <RoomsStoreContext.Provider value={roomsStore}>
       {props.children}
     </RoomsStoreContext.Provider>
   );
