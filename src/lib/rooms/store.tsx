@@ -58,10 +58,9 @@ class RoomsStore {
     });
   }
 
-  removeRoom(id: string): void {
-    this.setState('rooms', (prev) => {
-      return prev.filter((r) => r.id !== id);
-    });
+  removeRooms(ids: string[]): void {
+    if (ids.length === 0) return;
+    this.setState('rooms', (prev) => prev.filter((r) => !ids.includes(r.id)));
   }
 }
 
@@ -85,12 +84,16 @@ const RoomsStoreProvider: ParentComponent = (props) => {
       unsubscribe = null;
     }
 
-    if (!userStore.ip || userStore.loading || userStore.error) {
-      setState({ loading: false, error: userStore.error });
+    setState({ error: null, loading: true });
+
+    if (userStore.loading) return;
+    if (!userStore.ip) {
+      setState({
+        loading: false,
+        error: userStore.error || 'Failed to load user context.',
+      });
       return;
     }
-
-    setState({ loading: true, error: null });
 
     unsubscribe = subscribeToRooms(
       userStore.ip,
@@ -98,11 +101,12 @@ const RoomsStoreProvider: ParentComponent = (props) => {
         setState('rooms', rooms);
       },
       (roomIds) => {
-        roomIds.forEach((id) => {
-          roomsStore.removeRoom(id);
-        });
+        roomsStore.removeRooms(roomIds);
       },
       (error) => {
+        // * No need to reset error to null in prior callbacks since
+        // * receiving an error here indicates the observer will stop,
+        // * and no further updates will occur.
         setState('error', error);
       }
     );
