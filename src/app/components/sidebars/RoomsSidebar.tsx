@@ -1,11 +1,23 @@
-import { Component, For, Show } from 'solid-js';
+import { debounce } from '@solid-primitives/scheduled';
+import { Component, createMemo, createSignal, For, Show } from 'solid-js';
 
 import { BookUser, Hash, Search } from '@/lib/icons';
 import { useRoomsStore } from '@/lib/rooms';
 import styles from './shared.module.css';
 
 export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {
+  const [searchTerm, setSearchTerm] = createSignal('');
   const roomsStore = useRoomsStore();
+
+  const filteredRooms = createMemo(() => {
+    return roomsStore.rooms.filter((r) => {
+      return r.name.toLowerCase().includes(searchTerm());
+    });
+  });
+
+  const debouncedSearch = debounce((value: string) => {
+    setSearchTerm(value.trim().toLowerCase());
+  }, 250);
 
   return (
     <div
@@ -25,11 +37,12 @@ export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {
             name="room-search"
             placeholder="Search rooms..."
             class={styles.searchInput}
+            onInput={(e) => debouncedSearch(e.currentTarget.value)}
           />
         </div>
       </div>
       <div class={styles.roomList}>
-        <For each={roomsStore.rooms}>
+        <For each={filteredRooms()}>
           {(room) => (
             <button
               class={styles.roomItem}
