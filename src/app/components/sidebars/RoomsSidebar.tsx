@@ -3,7 +3,8 @@ import { Component, createMemo, createSignal, For, Show } from 'solid-js';
 
 import { BookUser, Hash, Search } from '@/lib/icons';
 import { useRoomsStore } from '@/lib/rooms';
-import styles from './shared.module.css';
+import styles from './RoomsSidebar.module.css';
+import sharedStyles from './shared.module.css';
 
 export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {
   const [searchTerm, setSearchTerm] = createSignal('');
@@ -21,13 +22,13 @@ export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {
 
   return (
     <div
-      class={`${styles.sidebar} ${styles.roomsSidebar}`}
+      class={`${sharedStyles.sidebar} ${sharedStyles.roomsSidebar}`}
       classList={{
-        [styles.open]: props.isOpen,
+        [sharedStyles.open]: props.isOpen,
       }}>
-      <div class={styles.header}>
+      <div class={sharedStyles.header}>
         <div class={styles.headerContent}>
-          <BookUser class={styles.logo} size={28} strokeWidth={2} />
+          <BookUser class={sharedStyles.logo} size={28} strokeWidth={2} />
           <h2>Rooms</h2>
         </div>
         <div class={styles.searchContainer}>

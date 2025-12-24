@@ -3,4 +3,5 @@ export interface RoomData {
   name: string;
   lastMessage: string | null;
   unreadCount: number;
+  createdAt: Date;
 }

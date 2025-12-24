@@ -2,6 +2,7 @@ import {
   collection,
   onSnapshot,
   QueryDocumentSnapshot,
+  Timestamp,
   Unsubscribe,
 } from 'firebase/firestore';
 
@@ -56,10 +57,17 @@ function toRoomData(docSnap: QueryDocumentSnapshot): RoomData {
     throw new Error(`Invalid data in room '${docSnap.ref.path}'`);
   }
 
+  if (!(data.createdAt instanceof Timestamp)) {
+    throw new Error(
+      `Invalid or missing 'createdAt' in room '${docSnap.ref.path}'`
+    );
+  }
+
   return {
     id: docSnap.id,
     name: data.name,
     lastMessage: null,
     unreadCount: 0,
+    createdAt: data.createdAt.toDate(),
   };
 }

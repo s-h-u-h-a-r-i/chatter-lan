@@ -1,23 +1,80 @@
-import { Component } from 'solid-js';
+import { Component, JSX, Show } from 'solid-js';
 
-import { Info } from '@/lib/icons';
-import styles from './shared.module.css';
+import { Calendar, Hash, Info } from '@/lib/icons';
+import { useRoomsStore } from '@/lib/rooms';
+import styles from './InfoSidebar.module.css';
+import sharedStyles from './shared.module.css';
 
 const EmptyInfoState: Component = () => {
-  return <></>;
+  return (
+    <div class={styles.emptyState}>
+      <div class={styles.emptyIcon}>
+        <Info size={48} strokeWidth={1.5} />
+      </div>
+      <p>Select a room to view details</p>
+    </div>
+  );
 };
 
+const Section: Component<{
+  children: JSX.Element;
+  title: string;
+  icon: JSX.Element;
+}> = (props) => (
+  <div class={styles.section}>
+    <div class={styles.sectionHeader}>
+      {props.icon}
+      <h3 class={styles.sectionTitle}>{props.title}</h3>
+    </div>
+    {props.children}
+  </div>
+);
+
 export const InfoSidebar: Component<{ isOpen: boolean }> = (props) => {
+  const roomsStore = useRoomsStore();
+
   return (
     <div
-      class={`${styles.sidebar} ${styles.infoSidebar}`}
+      class={`${sharedStyles.sidebar} ${sharedStyles.infoSidebar}`}
       classList={{
-        [styles.open]: props.isOpen,
+        [sharedStyles.open]: props.isOpen,
       }}>
-      <div class={styles.header}>
-        <Info class={styles.logo} size={20} strokeWidth={2} />
+      <div class={sharedStyles.header}>
+        <Info class={sharedStyles.logo} size={20} strokeWidth={2} />
         <h2>Room Info</h2>
       </div>
+
+      <Show when={roomsStore.selectedRoom} fallback={<EmptyInfoState />}>
+        {(room) => (
+          <div class={styles.content}>
+            <Section
+              title="Room Name"
+              icon={
+                <Hash class={styles.sectionIcon} size={16} strokeWidth={2} />
+              }>
+              <p>{room().name}</p>
+            </Section>
+
+            <Section
+              title="Created"
+              icon={
+                <Calendar
+                  class={styles.sectionIcon}
+                  size={16}
+                  strokeWidth={2}
+                />
+              }>
+              <p>
+                {room().createdAt.toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+            </Section>
+          </div>
+        )}
+      </Show>
     </div>
   );
 };
