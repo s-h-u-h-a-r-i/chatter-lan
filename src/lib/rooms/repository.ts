@@ -25,14 +25,15 @@ export function subscribeToRooms(
       snapshot.docChanges().forEach((change) => {
         switch (change.type) {
           case 'added':
-          case 'modified':
+          case 'modified': {
             try {
-              const converted = toRoomData(change.doc);
+              const converted = _toRoomData(change.doc);
               roomsToUpsert.push(converted);
             } catch (error) {
               console.warn('Failed to convert room:', error);
             }
             break;
+          }
           case 'removed':
             roomsToRemove.push(change.doc.id);
             break;
@@ -50,7 +51,7 @@ export function subscribeToRooms(
   );
 }
 
-function toRoomData(docSnap: QueryDocumentSnapshot): RoomData {
+function _toRoomData(docSnap: QueryDocumentSnapshot): RoomData {
   const data = docSnap.data();
 
   if (typeof data.name !== 'string') {
