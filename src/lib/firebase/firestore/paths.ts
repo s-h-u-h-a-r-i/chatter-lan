@@ -1,6 +1,7 @@
 const Segments = {
   rooms: 'rooms',
   ips: 'ips',
+  messages: 'messages',
 } as const;
 
 const fsPaths = {
@@ -15,10 +16,10 @@ const fsPaths = {
             ({
               path: `${Segments.rooms}/${Segments.ips}/${ip}/${roomId}`,
               messages: {
-                path: `${Segments.rooms}/${Segments.ips}/${ip}/${roomId}/messages`,
+                path: `${Segments.rooms}/${Segments.ips}/${ip}/${roomId}/${Segments.messages}`,
                 doc: <M extends string>(msgId: M) =>
                   ({
-                    path: `${Segments.rooms}/${Segments.ips}/${ip}/${roomId}/messages/${msgId}`,
+                    path: `${Segments.rooms}/${Segments.ips}/${ip}/${roomId}/${Segments.messages}/${msgId}`,
                   } as const),
               },
             } as const),

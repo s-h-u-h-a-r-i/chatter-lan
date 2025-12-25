@@ -46,6 +46,7 @@ export function subscribeToRooms(
       if (roomsToRemove.length > 0) onRemove(roomsToRemove);
     },
     (error) => {
+      console.error('Error subscribing to rooms:', error);
       onError(error.message);
     }
   );

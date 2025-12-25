@@ -51,6 +51,7 @@ export function subscribeToMessages(params: {
       if (messagesToRemove.length > 0) params.onRemove(messagesToRemove);
     },
     (error) => {
+      console.error('Error subscribing to messages:', error);
       params.onError(error.message);
     }
   );
