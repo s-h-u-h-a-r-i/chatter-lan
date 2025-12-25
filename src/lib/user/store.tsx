@@ -1,9 +1,13 @@
+import { signInAnonymously } from 'firebase/auth';
 import { createContext, onMount, ParentComponent, useContext } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
+
+import { auth } from '../firebase';
 import { fetchPublicIp } from './service';
 
 interface UserState {
   ip: string | null;
+  uid: string | null;
   name: string | null;
   loading: boolean;
   error: string | null;
@@ -37,6 +41,7 @@ const UserStoreContext = createContext<UserStore>();
 const UserStoreProvider: ParentComponent = (props) => {
   const [state, setState] = createStore<UserState>({
     ip: null,
+    uid: null,
     name: null,
     loading: true,
     error: null,
@@ -46,12 +51,19 @@ const UserStoreProvider: ParentComponent = (props) => {
 
   onMount(async () => {
     try {
-      const ip = await fetchPublicIp();
-      setState({ ip, loading: false, error: null });
+      const [userCredential, ip] = await Promise.all([
+        signInAnonymously(auth),
+        fetchPublicIp(),
+      ]);
+      const uid = userCredential.user.uid;
+      setState({ ip, uid, loading: false, error: null });
     } catch (error) {
       setState({
         loading: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch IP',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to sign in or fetch IP',
       });
     }
   });
