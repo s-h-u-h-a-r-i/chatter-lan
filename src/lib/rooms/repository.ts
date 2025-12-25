@@ -11,7 +11,7 @@ import { RoomData } from './types';
 
 export function subscribeToRooms(
   ip: string,
-  onUpdate: (rooms: RoomData[]) => void,
+  onUpsert: (rooms: RoomData[]) => void,
   onRemove: (roomIds: string[]) => void,
   onError: (error: string) => void
 ): Unsubscribe {
@@ -42,7 +42,7 @@ export function subscribeToRooms(
             break;
         }
       });
-      if (roomsToUpsert.length > 0) onUpdate(roomsToUpsert);
+      if (roomsToUpsert.length > 0) onUpsert(roomsToUpsert);
       if (roomsToRemove.length > 0) onRemove(roomsToRemove);
     },
     (error) => {

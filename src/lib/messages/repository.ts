@@ -12,7 +12,7 @@ import { MessageData } from './types';
 export function subscribeToMessages(params: {
   ip: string;
   roomId: string;
-  onUpdate: (messages: MessageData[]) => void;
+  onUpsert: (messages: MessageData[]) => void;
   onRemove: (messageIds: string[]) => void;
   onError: (error: string) => void;
 }): Unsubscribe {
@@ -47,7 +47,7 @@ export function subscribeToMessages(params: {
             break;
         }
       });
-      if (messagesToUpsert.length > 0) params.onUpdate(messagesToUpsert);
+      if (messagesToUpsert.length > 0) params.onUpsert(messagesToUpsert);
       if (messagesToRemove.length > 0) params.onRemove(messagesToRemove);
     },
     (error) => {

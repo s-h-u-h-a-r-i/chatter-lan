@@ -46,22 +46,6 @@ class RoomsStore {
   setSelectedRoomId(id: string) {
     this.setState('selectedRoomId', id);
   }
-
-  upsertRoom(room: RoomData): void {
-    this.setState('rooms', (prev) => {
-      const index = prev.findIndex((r) => r.id === room.id);
-      if (index < 0) {
-        return [...prev, room];
-      } else {
-        return [...prev.slice(0, index), room, ...prev.slice(index + 1)];
-      }
-    });
-  }
-
-  removeRooms(ids: string[]): void {
-    if (ids.length === 0) return;
-    this.setState('rooms', (prev) => prev.filter((r) => !ids.includes(r.id)));
-  }
 }
 
 const RoomsStoreContext = createContext<RoomsStore>();
@@ -99,10 +83,25 @@ const RoomsStoreProvider: ParentComponent = (props) => {
       userStore.ip,
       (rooms) => {
         setState('loading', false);
-        setState('rooms', rooms);
+        setState('rooms', (prev) => {
+          const updatedRooms = [...prev];
+          rooms.forEach((incomingRoom) => {
+            const index = updatedRooms.findIndex(
+              (r) => r.id === incomingRoom.id
+            );
+            if (index >= 0) {
+              updatedRooms[index] = incomingRoom;
+            } else {
+              updatedRooms.push(incomingRoom);
+            }
+          });
+          return updatedRooms;
+        });
       },
       (roomIds) => {
-        roomsStore.removeRooms(roomIds);
+        setState('rooms', (prev) =>
+          prev.filter((r) => !roomIds.includes(r.id))
+        );
       },
       (error) => {
         // * No need to reset error to null in prior callbacks since

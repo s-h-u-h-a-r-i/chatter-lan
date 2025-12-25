@@ -94,7 +94,7 @@ const MessagesStoreProvider: ParentComponent = (props) => {
         const unsubscribe = subscribeToMessages({
           ip: userIp,
           roomId: roomId,
-          onUpdate(messages) {
+          onUpsert(messages) {
             setState('loadingByRoom', roomId, false);
             setState('messagesByRoom', roomId, (prev) => {
               const existingIds = new Set(prev.map((m) => m.id));
