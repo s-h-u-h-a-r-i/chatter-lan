@@ -6,8 +6,8 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 
-import { RoomData } from '@/types/room';
 import { firestore, fsPaths } from '../firebase';
+import { RoomData } from './types';
 
 export function subscribeToRooms(
   ip: string,

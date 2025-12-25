@@ -8,9 +8,9 @@ import {
 } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
-import { RoomData } from '@/types/room';
 import { useUserStore } from '../user';
 import { subscribeToRooms } from './repository';
+import { RoomData } from './types';
 
 interface RoomsState {
   rooms: RoomData[];
