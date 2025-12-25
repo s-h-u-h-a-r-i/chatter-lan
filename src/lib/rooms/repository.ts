@@ -66,8 +66,6 @@ function toRoomData(docSnap: QueryDocumentSnapshot): RoomData {
   return {
     id: docSnap.id,
     name: data.name,
-    lastMessage: null,
-    unreadCount: 0,
     createdAt: data.createdAt.toDate(),
   };
 }

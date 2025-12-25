@@ -42,6 +42,8 @@ const UserStoreProvider: ParentComponent = (props) => {
     error: null,
   });
 
+  const userStore = new UserStore(state, setState);
+
   onMount(async () => {
     try {
       const ip = await fetchPublicIp();
@@ -55,7 +57,7 @@ const UserStoreProvider: ParentComponent = (props) => {
   });
 
   return (
-    <UserStoreContext.Provider value={new UserStore(state, setState)}>
+    <UserStoreContext.Provider value={userStore}>
       {props.children}
     </UserStoreContext.Provider>
   );

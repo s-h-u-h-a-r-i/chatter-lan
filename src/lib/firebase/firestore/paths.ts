@@ -14,6 +14,13 @@ const fsPaths = {
           doc: <R extends string>(roomId: R) =>
             ({
               path: `${Segments.rooms}/${Segments.ips}/${ip}/${roomId}`,
+              messages: {
+                path: `${Segments.rooms}/${Segments.ips}/${ip}/${roomId}/messages`,
+                doc: <M extends string>(msgId: M) =>
+                  ({
+                    path: `${Segments.rooms}/${Segments.ips}/${ip}/${roomId}/messages/${msgId}`,
+                  } as const),
+              },
             } as const),
         } as const),
     },

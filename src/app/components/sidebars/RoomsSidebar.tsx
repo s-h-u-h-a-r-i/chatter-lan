@@ -1,5 +1,5 @@
 import { debounce } from '@solid-primitives/scheduled';
-import { Component, createMemo, createSignal, For, Show } from 'solid-js';
+import { Component, createMemo, createSignal, For } from 'solid-js';
 
 import { BookUser, Hash, Search } from '@/lib/icons';
 import { useRoomsStore } from '@/lib/rooms';
@@ -56,11 +56,11 @@ export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {
               </div>
               <div class={styles.roomContent}>
                 <div class={styles.roomName}>{room.name}</div>
-                <div class={styles.roomLastMessage}>{room.lastMessage}</div>
+                {/* <div class={styles.roomLastMessage}>{room.lastMessage}</div> */}
               </div>
-              <Show when={room.unreadCount > 0}>
+              {/* <Show when={room.unreadCount > 0}>
                 <div class={styles.unreadBadge}>{room.unreadCount}</div>
-              </Show>
+              </Show> */}
             </button>
           )}
         </For>
