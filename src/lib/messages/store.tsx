@@ -68,15 +68,26 @@ const MessagesStoreProvider: ParentComponent = (props) => {
           unsubscribe();
           subscriptions.delete(roomId);
         }
-        setState('messagesByRoom', roomId, []);
-        setState('loadingByRoom', roomId, false);
-        setState('errorsByRoom', roomId, null);
+        // * Delete keys by reconstructing the objects without those keys
+        setState('messagesByRoom', (prev) => {
+          const { [roomId]: _, ...rest } = prev;
+          return rest;
+        });
+        setState('loadingByRoom', (prev) => {
+          const { [roomId]: _, ...rest } = prev;
+          return rest;
+        });
+        setState('errorsByRoom', (prev) => {
+          const { [roomId]: _, ...rest } = prev;
+          return rest;
+        });
       }
     });
 
     // * Subscribe to new rooms
     currentRoomIds.forEach((roomId) => {
       if (!subscriptions.has(roomId)) {
+        setState('messagesByRoom', roomId, []);
         setState('loadingByRoom', roomId, true);
         setState('errorsByRoom', roomId, null);
 
@@ -84,6 +95,7 @@ const MessagesStoreProvider: ParentComponent = (props) => {
           ip: userIp,
           roomId: roomId,
           onUpdate(messages) {
+            setState('loadingByRoom', roomId, false);
             setState('messagesByRoom', roomId, (prev) => {
               const existingIds = new Set(prev.map((m) => m.id));
               const newMessages = messages.filter(
@@ -95,17 +107,19 @@ const MessagesStoreProvider: ParentComponent = (props) => {
             });
           },
           onRemove(messageIds) {
-            setState('messagesByRoom', roomId, (prev) =>
-              prev.filter((m) => !messageIds.includes(m.id))
-            );
+            setState('messagesByRoom', roomId, (prev) => {
+              const existing = prev ?? [];
+              return existing.filter((m) => !messageIds.includes(m.id));
+            });
           },
           onError(error) {
             setState('errorsByRoom', roomId, error);
+            setState('loadingByRoom', roomId, false);
+            subscriptions.delete(roomId);
           },
         });
 
         subscriptions.set(roomId, unsubscribe);
-        setState('loadingByRoom', roomId, false);
       }
     });
   });

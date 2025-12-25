@@ -98,6 +98,7 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     unsubscribe = subscribeToRooms(
       userStore.ip,
       (rooms) => {
+        setState('loading', false);
         setState('rooms', rooms);
       },
       (roomIds) => {
@@ -108,10 +109,9 @@ const RoomsStoreProvider: ParentComponent = (props) => {
         // * receiving an error here indicates the observer will stop,
         // * and no further updates will occur.
         setState('error', error);
+        setState('loading', false);
       }
     );
-
-    setState('loading', false);
   });
 
   onCleanup(() => {
