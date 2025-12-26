@@ -186,11 +186,11 @@ async function _handleEncrypt(message: WorkerEncryptMessage): Promise<void> {
       plaintextBuffer
     );
 
-    const cipherText = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+    const ciphertext = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
     const ivBase64 = btoa(String.fromCharCode(...iv));
 
     const result = JSON.stringify({
-      cipherText,
+      ciphertext,
       iv: ivBase64,
     });
 
