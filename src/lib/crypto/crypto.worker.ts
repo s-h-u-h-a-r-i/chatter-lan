@@ -4,6 +4,7 @@
 
 import type {
   WorkerDecryptMessage,
+  WorkerEncryptMessage,
   WorkerInitMessage,
   WorkerMessage,
   WorkerRemoveKeyMessage,
@@ -18,18 +19,18 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
 
   try {
     switch (message.type) {
-      case 'init': {
+      case 'init':
         await _handleInit(message);
         break;
-      }
-      case 'decrypt': {
+      case 'decrypt':
         await _handleDecrypt(message);
         break;
-      }
-      case 'remove-key': {
+      case 'encrypt':
+        await _handleEncrypt(message);
+        break;
+      case 'remove-key':
         _handleRemoveKey(message);
         break;
-      }
       default: {
         const _exhaustiveCheck: never = message;
         self.postMessage({
@@ -83,7 +84,7 @@ async function _handleInit(message: WorkerInitMessage): Promise<void> {
         length: 256,
       },
       false,
-      ['decrypt']
+      ['decrypt', 'encrypt']
     );
 
     cryptoKeys.set(message.keyId, cryptoKey);
@@ -110,7 +111,7 @@ async function _handleInit(message: WorkerInitMessage): Promise<void> {
  *
  * @param message Decryption request containing encrypted data and key identifier
  */
-async function _handleDecrypt(message: WorkerDecryptMessage) {
+async function _handleDecrypt(message: WorkerDecryptMessage): Promise<void> {
   const cryptoKey = cryptoKeys.get(message.keyId);
 
   if (!cryptoKey) {
@@ -147,6 +148,62 @@ async function _handleDecrypt(message: WorkerDecryptMessage) {
       type: 'decrypt-error',
       id: message.id,
       error: error instanceof Error ? error.message : 'Decryption failed',
+    } satisfies WorkerResponse);
+  }
+}
+
+/**
+ * ### Encrypt plaintext data
+ *
+ * Transforms plaintext into encrypted ciphertext using a previously
+ * initialized key, ensuring sensitive operations remain isolated from
+ * the main application thread.
+ *
+ * @param message Encryption request containing plaintext and key identifier
+ */
+async function _handleEncrypt(message: WorkerEncryptMessage): Promise<void> {
+  const cryptoKey = cryptoKeys.get(message.keyId);
+
+  if (!cryptoKey) {
+    self.postMessage({
+      type: 'encrypt-error',
+      id: message.id,
+      error: 'Key not initialized. Call init first.',
+    } satisfies WorkerResponse);
+    return;
+  }
+
+  try {
+    const plaintextBuffer = new TextEncoder().encode(message.plainText);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+
+    const encrypted = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv,
+      },
+      cryptoKey,
+      plaintextBuffer
+    );
+
+    const cipherText = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+    const ivBase64 = btoa(String.fromCharCode(...iv));
+
+    const result = JSON.stringify({
+      cipherText,
+      iv: ivBase64,
+    });
+
+    self.postMessage({
+      type: 'encrypt-success',
+      id: message.id,
+      data: result,
+    } satisfies WorkerResponse);
+  } catch (error) {
+    self.postMessage({
+      type: 'encrypt-error',
+      id: message.id,
+      error: error instanceof Error ? error.message : 'Encryption failed',
     } satisfies WorkerResponse);
   }
 }

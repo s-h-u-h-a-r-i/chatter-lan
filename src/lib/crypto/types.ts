@@ -120,6 +120,42 @@ export interface WorkerDecryptMessage {
 }
 
 /**
+ * ### Worker encryption message
+ *
+ * Enables secure submission of data to be encrypted using a specified cryptographic key,
+ * allowing correlation of requests and responses for reliable encryption operations in asynchronous contexts.
+ */
+export interface WorkerEncryptMessage {
+  /**
+   * String literal identifying the message as an encryption request
+   *
+   * Enables the worker to recognize and appropriately process encryption operations.
+   */
+  type: 'encrypt';
+
+  /**
+   * Unique identifier for correlating this request with the corresponding worker response
+   *
+   * Facilitates the reliable tracking and matching of asynchronous encryption responses to their requests.
+   */
+  id: number;
+
+  /**
+   * Identifier referencing the cryptographic key to use for encryption
+   *
+   * Supports management of multiple keys within a single worker, ensuring proper key selection.
+   */
+  keyId: string;
+
+  /**
+   * Plaintext data to be encrypted by the worker
+   *
+   * Protects sensitive content by converting human-readable data into a secure encrypted form.
+   */
+  plainText: string;
+}
+
+/**
  * ### Worker key removal message
  *
  * Requests removal of a previously initialized cryptographic key from the worker's memory,
@@ -167,6 +203,15 @@ export interface WorkerDecryptMessageWithoutId
   extends Omit<WorkerDecryptMessage, 'id'> {}
 
 /**
+ * ### Worker encryption message without request identifier
+ *
+ * Enables constructing encryption messages before assigning request identifiers,
+ * supporting a clean separation between message structure and request tracking.
+ */
+export interface WorkerEncryptMessageWithoutId
+  extends Omit<WorkerEncryptMessage, 'id'> {}
+
+/**
  * ### Worker key removal message without request identifier
  *
  * Enables constructing key removal messages before assigning request identifiers,
@@ -187,7 +232,11 @@ export interface WorkerSuccessResponse {
    *
    * Enables the caller to distinguish between different successful operation types and handle them appropriately.
    */
-  type: 'init-success' | 'decrypt-success' | 'remove-key-success';
+  type:
+    | 'init-success'
+    | 'decrypt-success'
+    | 'encrypt-success'
+    | 'remove-key-success';
 
   /**
    * Unique identifier matching the original request that triggered this response
@@ -216,7 +265,7 @@ export interface WorkerErrorResponse {
    *
    * Enables the caller to distinguish between different error types and handle them appropriately.
    */
-  type: 'init-error' | 'decrypt-error' | 'remove-key-error';
+  type: 'init-error' | 'decrypt-error' | 'encrypt-error' | 'remove-key-error';
 
   /**
    * Unique identifier matching the original request that triggered this error response
@@ -250,6 +299,7 @@ export type WorkerResponse = WorkerSuccessResponse | WorkerErrorResponse;
 export type WorkerMessage =
   | WorkerInitMessage
   | WorkerDecryptMessage
+  | WorkerEncryptMessage
   | WorkerRemoveKeyMessage;
 
 /**
@@ -261,4 +311,5 @@ export type WorkerMessage =
 export type WorkerMessageWithoutId =
   | WorkerInitMessageWithoutId
   | WorkerDecryptMessageWithoutId
+  | WorkerEncryptMessageWithoutId
   | WorkerRemoveKeyMessageWithoutId;

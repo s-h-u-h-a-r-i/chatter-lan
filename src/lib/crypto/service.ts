@@ -74,6 +74,29 @@ export class CryptoService {
   }
 
   /**
+   * ### Encrypt plaintext data
+   *
+   * Transforms plaintext into encrypted ciphertext using a previously
+   * initialized key.
+   *
+   * @param keyId Identifier of the key to use for encryption
+   * @param plaintext The plaintext string to encrypt
+   * @returns Encrypted data structure containing ciphertext and IV
+   */
+  async encrypt(
+    keyId: string,
+    plainText: string
+  ): Promise<{ ciphertext: string; iv: string }> {
+    const result = await this.#sendMessage({
+      type: 'encrypt',
+      keyId,
+      plainText,
+    });
+
+    return JSON.parse(result);
+  }
+
+  /**
    * ### Remove a stored cryptographic key
    *
    * Permanently removes a key from the worker's memory, preventing
@@ -138,6 +161,7 @@ export class CryptoService {
         switch (response.type) {
           case 'init-error':
           case 'decrypt-error':
+          case 'encrypt-error':
           case 'remove-key-error':
             reject(new Error(response.error));
             break;
@@ -146,6 +170,7 @@ export class CryptoService {
             resolve('success');
             break;
           case 'decrypt-success':
+          case 'encrypt-success':
             resolve(response.data || '');
             break;
           default:
