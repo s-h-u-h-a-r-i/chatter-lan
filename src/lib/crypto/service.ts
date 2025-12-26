@@ -82,13 +82,15 @@ export class CryptoService {
         switch (response.type) {
           case 'init-error':
           case 'decrypt-error':
-            reject(new Error((response as any).error));
+          case 'remove-room-error':
+            reject(new Error(response.error));
             break;
           case 'init-success':
+          case 'remove-room-success':
             resolve('success');
             break;
           case 'decrypt-success':
-            resolve((response as any).data || '');
+            resolve(response.data || '');
             break;
           default:
             const _exhaustiveCheck: never = response;

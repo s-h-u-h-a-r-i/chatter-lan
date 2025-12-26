@@ -6,6 +6,7 @@ import type {
   WorkerDecryptMessage,
   WorkerInitMessage,
   WorkerMessage,
+  WorkerRemoveRoomMessage,
   WorkerResponse,
 } from './types';
 
@@ -18,11 +19,15 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
   try {
     switch (message.type) {
       case 'init': {
-        await _handleInit(message, messageId);
+        await _handleInit(message);
         break;
       }
       case 'decrypt': {
-        await _handleDecrypt(message, messageId);
+        await _handleDecrypt(message);
+        break;
+      }
+      case 'remove-room': {
+        _handleRemoveRoom(message);
         break;
       }
       default: {
@@ -43,10 +48,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
   }
 });
 
-async function _handleInit(
-  message: WorkerInitMessage,
-  id: number
-): Promise<void> {
+async function _handleInit(message: WorkerInitMessage): Promise<void> {
   try {
     const passphraseBuffer = new TextEncoder().encode(message.passphrase);
     const salt = new Uint8Array(message.salt);
@@ -77,23 +79,26 @@ async function _handleInit(
 
     cryptoKeys.set(message.roomId, cryptoKey);
 
-    self.postMessage({ type: 'init-success', id } satisfies WorkerResponse);
+    self.postMessage({
+      type: 'init-success',
+      id: message.id,
+    } satisfies WorkerResponse);
   } catch (error) {
     self.postMessage({
       type: 'init-error',
-      id,
+      id: message.id,
       error: error instanceof Error ? error.message : 'Key derivation failed',
     } satisfies WorkerResponse);
   }
 }
 
-async function _handleDecrypt(message: WorkerDecryptMessage, id: number) {
+async function _handleDecrypt(message: WorkerDecryptMessage) {
   const cryptoKey = cryptoKeys.get(message.roomId);
 
   if (!cryptoKey) {
     self.postMessage({
       type: 'decrypt-error',
-      id,
+      id: message.id,
       error: 'Key not initialized. Call init first.',
     } satisfies WorkerResponse);
     return;
@@ -116,14 +121,22 @@ async function _handleDecrypt(message: WorkerDecryptMessage, id: number) {
 
     self.postMessage({
       type: 'decrypt-success',
-      id,
+      id: message.id,
       data: plainText,
     } satisfies WorkerResponse);
   } catch (error) {
     self.postMessage({
       type: 'decrypt-error',
-      id,
+      id: message.id,
       error: error instanceof Error ? error.message : 'Decryption failed',
     } satisfies WorkerResponse);
   }
+}
+
+function _handleRemoveRoom(message: WorkerRemoveRoomMessage): void {
+  cryptoKeys.delete(message.roomid);
+  self.postMessage({
+    type: 'remove-room-success',
+    id: message.id,
+  } satisfies WorkerResponse);
 }

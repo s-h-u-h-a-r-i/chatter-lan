@@ -21,28 +21,41 @@ export interface WorkerDecryptMessage {
   iv: Uint8Array;
 }
 
+export interface WorkerRemoveRoomMessage {
+  type: 'remove-room';
+  id: number;
+  roomid: string;
+}
+
 export interface WorkerInitMessageWithoutId
   extends Omit<WorkerInitMessage, 'id'> {}
 
 export interface WorkerDecryptMessageWithoutId
   extends Omit<WorkerDecryptMessage, 'id'> {}
 
+export interface WorkerRemoveRoomMessageWithoutId
+  extends Omit<WorkerRemoveRoomMessage, 'id'> {}
+
 export interface WorkerSuccessReponse {
-  type: 'init-success' | 'decrypt-success';
+  type: 'init-success' | 'decrypt-success' | 'remove-room-success';
   id: number;
   data?: string;
 }
 
 export interface WorkerErrorResponse {
-  type: 'init-error' | 'decrypt-error';
+  type: 'init-error' | 'decrypt-error' | 'remove-room-error';
   id: number;
   error: string;
 }
 
 export type WorkerResponse = WorkerSuccessReponse | WorkerErrorResponse;
 
-export type WorkerMessage = WorkerInitMessage | WorkerDecryptMessage;
+export type WorkerMessage =
+  | WorkerInitMessage
+  | WorkerDecryptMessage
+  | WorkerRemoveRoomMessage;
 
 export type WorkerMessageWithoutId =
   | WorkerInitMessageWithoutId
-  | WorkerDecryptMessageWithoutId;
+  | WorkerDecryptMessageWithoutId
+  | WorkerRemoveRoomMessageWithoutId;
