@@ -16,19 +16,19 @@ export class CryptoService {
   }
 
   async init(
-    roomId: string,
+    keyId: string,
     passphrase: string,
     salt: Uint8Array
   ): Promise<void> {
     await this.#sendMessage({
       type: 'init',
-      roomId,
+      keyId: keyId,
       passphrase,
       salt,
     });
   }
 
-  async decrypt(roomId: string, encrypted: EncryptedData): Promise<string> {
+  async decrypt(keyId: string, encrypted: EncryptedData): Promise<string> {
     const ciphertext = Uint8Array.from(atob(encrypted.ciphertext), (c) =>
       c.charCodeAt(0)
     );
@@ -37,10 +37,17 @@ export class CryptoService {
 
     return await this.#sendMessage({
       type: 'decrypt',
-      roomId,
+      keyId,
       ciphertext,
       salt,
       iv,
+    });
+  }
+
+  async removeKey(keyId: string): Promise<void> {
+    await this.#sendMessage({
+      type: 'remove-key',
+      keyId,
     });
   }
 
@@ -82,11 +89,11 @@ export class CryptoService {
         switch (response.type) {
           case 'init-error':
           case 'decrypt-error':
-          case 'remove-room-error':
+          case 'remove-key-error':
             reject(new Error(response.error));
             break;
           case 'init-success':
-          case 'remove-room-success':
+          case 'remove-key-success':
             resolve('success');
             break;
           case 'decrypt-success':

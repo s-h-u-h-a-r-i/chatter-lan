@@ -6,7 +6,7 @@ import type {
   WorkerDecryptMessage,
   WorkerInitMessage,
   WorkerMessage,
-  WorkerRemoveRoomMessage,
+  WorkerRemoveKeyMessage,
   WorkerResponse,
 } from './types';
 
@@ -26,8 +26,8 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
         await _handleDecrypt(message);
         break;
       }
-      case 'remove-room': {
-        _handleRemoveRoom(message);
+      case 'remove-key': {
+        _handleRemoveKey(message);
         break;
       }
       default: {
@@ -77,7 +77,7 @@ async function _handleInit(message: WorkerInitMessage): Promise<void> {
       ['decrypt']
     );
 
-    cryptoKeys.set(message.roomId, cryptoKey);
+    cryptoKeys.set(message.keyId, cryptoKey);
 
     self.postMessage({
       type: 'init-success',
@@ -93,7 +93,7 @@ async function _handleInit(message: WorkerInitMessage): Promise<void> {
 }
 
 async function _handleDecrypt(message: WorkerDecryptMessage) {
-  const cryptoKey = cryptoKeys.get(message.roomId);
+  const cryptoKey = cryptoKeys.get(message.keyId);
 
   if (!cryptoKey) {
     self.postMessage({
@@ -133,10 +133,10 @@ async function _handleDecrypt(message: WorkerDecryptMessage) {
   }
 }
 
-function _handleRemoveRoom(message: WorkerRemoveRoomMessage): void {
-  cryptoKeys.delete(message.roomid);
+function _handleRemoveKey(message: WorkerRemoveKeyMessage): void {
+  cryptoKeys.delete(message.keyId);
   self.postMessage({
-    type: 'remove-room-success',
+    type: 'remove-key-success',
     id: message.id,
   } satisfies WorkerResponse);
 }

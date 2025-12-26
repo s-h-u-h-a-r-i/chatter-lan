@@ -7,7 +7,7 @@ export interface EncryptedData {
 export interface WorkerInitMessage {
   type: 'init';
   id: number;
-  roomId: string;
+  keyId: string;
   passphrase: string;
   salt: Uint8Array;
 }
@@ -15,16 +15,16 @@ export interface WorkerInitMessage {
 export interface WorkerDecryptMessage {
   type: 'decrypt';
   id: number;
-  roomId: string;
+  keyId: string;
   ciphertext: Uint8Array;
   salt: Uint8Array;
   iv: Uint8Array;
 }
 
-export interface WorkerRemoveRoomMessage {
-  type: 'remove-room';
+export interface WorkerRemoveKeyMessage {
+  type: 'remove-key';
   id: number;
-  roomid: string;
+  keyId: string;
 }
 
 export interface WorkerInitMessageWithoutId
@@ -33,17 +33,17 @@ export interface WorkerInitMessageWithoutId
 export interface WorkerDecryptMessageWithoutId
   extends Omit<WorkerDecryptMessage, 'id'> {}
 
-export interface WorkerRemoveRoomMessageWithoutId
-  extends Omit<WorkerRemoveRoomMessage, 'id'> {}
+export interface WorkerRemoveKeyMessageWithoutId
+  extends Omit<WorkerRemoveKeyMessage, 'id'> {}
 
 export interface WorkerSuccessReponse {
-  type: 'init-success' | 'decrypt-success' | 'remove-room-success';
+  type: 'init-success' | 'decrypt-success' | 'remove-key-success';
   id: number;
   data?: string;
 }
 
 export interface WorkerErrorResponse {
-  type: 'init-error' | 'decrypt-error' | 'remove-room-error';
+  type: 'init-error' | 'decrypt-error' | 'remove-key-error';
   id: number;
   error: string;
 }
@@ -53,9 +53,9 @@ export type WorkerResponse = WorkerSuccessReponse | WorkerErrorResponse;
 export type WorkerMessage =
   | WorkerInitMessage
   | WorkerDecryptMessage
-  | WorkerRemoveRoomMessage;
+  | WorkerRemoveKeyMessage;
 
 export type WorkerMessageWithoutId =
   | WorkerInitMessageWithoutId
   | WorkerDecryptMessageWithoutId
-  | WorkerRemoveRoomMessageWithoutId;
+  | WorkerRemoveKeyMessageWithoutId;
