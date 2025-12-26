@@ -1,20 +1,25 @@
 import { Component, JSX, Show } from 'solid-js';
 
-import { Calendar, Hash, Info } from '@/features/icons';
-import { useRoomsStore } from '@/features/rooms';
-import styles from './InfoSidebar.module.css';
-import sharedStyles from './shared.module.css';
+import { Calendar, Hash, Info } from '@/components/icons';
+import { SidebarLayout } from '@/components/ui';
+import { useRoomsStore } from '../../store';
+import styles from './index.module.css';
 
-const EmptyInfoState: Component = () => {
-  return (
-    <div class={styles.emptyState}>
-      <div class={styles.emptyIcon}>
-        <Info size={48} strokeWidth={1.5} />
-      </div>
-      <p>Select a room to view details</p>
+const Header: Component = (props) => (
+  <>
+    <Info class={styles.logo} size={20} strokeWidth={2} />
+    <h2 class={styles.heading}>Room Info</h2>
+  </>
+);
+
+const EmptyInfoState: Component = () => (
+  <div class={styles.emptyState}>
+    <div class={styles.emptyIcon}>
+      <Info size={48} strokeWidth={1.5} />
     </div>
-  );
-};
+    <p>Select a room to view details</p>
+  </div>
+);
 
 const Section: Component<{
   children: JSX.Element;
@@ -34,16 +39,7 @@ export const InfoSidebar: Component<{ isOpen: boolean }> = (props) => {
   const roomsStore = useRoomsStore();
 
   return (
-    <div
-      class={`${sharedStyles.sidebar} ${sharedStyles.infoSidebar}`}
-      classList={{
-        [sharedStyles.open]: props.isOpen,
-      }}>
-      <div class={sharedStyles.header}>
-        <Info class={sharedStyles.logo} size={20} strokeWidth={2} />
-        <h2>Room Info</h2>
-      </div>
-
+    <SidebarLayout location="right" isOpen={props.isOpen} header={<Header />}>
       <Show when={roomsStore.selectedRoom} fallback={<EmptyInfoState />}>
         {(room) => (
           <div class={styles.content}>
@@ -75,6 +71,6 @@ export const InfoSidebar: Component<{ isOpen: boolean }> = (props) => {
           </div>
         )}
       </Show>
-    </div>
+    </SidebarLayout>
   );
 };

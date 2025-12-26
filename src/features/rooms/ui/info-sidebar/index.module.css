@@ -1,3 +1,15 @@
+.logo {
+  color: var(--color-accent-soft);
+}
+
+.heading {
+  margin: 0;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  font-size: 1.125rem;
+}
+
 .emptyState {
   flex: 1;
   display: flex;

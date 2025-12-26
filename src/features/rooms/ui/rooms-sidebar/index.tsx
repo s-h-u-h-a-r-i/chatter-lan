@@ -1,10 +1,37 @@
-import { debounce } from '@solid-primitives/scheduled';
 import { Component, createMemo, createSignal, For } from 'solid-js';
 
-import { BookUser, Hash, Search } from '@/features/icons';
-import { useRoomsStore } from '@/features/rooms';
-import styles from './RoomsSidebar.module.css';
-import sharedStyles from './shared.module.css';
+import { BookUser, Hash, Search } from '@/components/icons';
+import { SidebarLayout } from '@/components/ui';
+import { debounce } from '@solid-primitives/scheduled';
+import { useRoomsStore } from '../../store';
+import styles from './index.module.css';
+
+const Header: Component<{ setSearchTerm(searchTerm: string): void }> = (
+  props
+) => {
+  const debouncedSearch = debounce((value: string) => {
+    props.setSearchTerm(value.trim().toLowerCase());
+  }, 250);
+
+  return (
+    <>
+      <div class={styles.header}>
+        <BookUser class={styles.logo} size={28} strokeWidth={2} />
+        <h2>Rooms</h2>
+      </div>
+      <div class={styles.searchContainer}>
+        <Search class={styles.searchIcon} size={16} />
+        <input
+          type="text"
+          name="room-search"
+          placeholder="Search rooms..."
+          class={styles.searchInput}
+          onInput={(e) => debouncedSearch(e.currentTarget.value)}
+        />
+      </div>
+    </>
+  );
+};
 
 export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {
   const [searchTerm, setSearchTerm] = createSignal('');
@@ -16,32 +43,11 @@ export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {
     });
   });
 
-  const debouncedSearch = debounce((value: string) => {
-    setSearchTerm(value.trim().toLowerCase());
-  }, 250);
-
   return (
-    <div
-      class={`${sharedStyles.sidebar} ${sharedStyles.roomsSidebar}`}
-      classList={{
-        [sharedStyles.open]: props.isOpen,
-      }}>
-      <div class={sharedStyles.header}>
-        <div class={styles.headerContent}>
-          <BookUser class={sharedStyles.logo} size={28} strokeWidth={2} />
-          <h2>Rooms</h2>
-        </div>
-        <div class={styles.searchContainer}>
-          <Search class={styles.searchIcon} size={16} />
-          <input
-            type="text"
-            name="room-search"
-            placeholder="Search rooms..."
-            class={styles.searchInput}
-            onInput={(e) => debouncedSearch(e.currentTarget.value)}
-          />
-        </div>
-      </div>
+    <SidebarLayout
+      location="left"
+      isOpen={props.isOpen}
+      header={<Header setSearchTerm={setSearchTerm} />}>
       <div class={styles.roomList}>
         <For each={filteredRooms()}>
           {(room) => (
@@ -65,6 +71,6 @@ export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {
           )}
         </For>
       </div>
-    </div>
+    </SidebarLayout>
   );
 };
