@@ -1,13 +1,36 @@
 import {
+  addDoc,
   collection,
+  CollectionReference,
   onSnapshot,
   QueryDocumentSnapshot,
+  serverTimestamp,
   Timestamp,
   Unsubscribe,
 } from 'firebase/firestore';
 
 import { firestore, fsPaths } from '../firebase';
-import { MessageData } from './types';
+import { EncryptedMessageContent, MessageData } from './types';
+
+export async function createMessage(params: {
+  ip: string;
+  roomId: string;
+  senderId: string;
+  encryptedContent: EncryptedMessageContent;
+}): Promise<string> {
+  const messagesRef = _getMessagesCollectionRef(params.ip, params.roomId);
+
+  const docRef = await addDoc(messagesRef, {
+    content: {
+      ciphertext: params.encryptedContent.ciphertext,
+      iv: params.encryptedContent.iv,
+    },
+    createdAt: serverTimestamp(),
+    senderId: params.senderId,
+  });
+
+  return docRef.id;
+}
 
 export function subscribeToMessages(params: {
   ip: string;
@@ -17,10 +40,7 @@ export function subscribeToMessages(params: {
   onError: (error: string) => void;
 }): Unsubscribe {
   // TODO: Use room reference?
-  const messagesRef = collection(
-    firestore,
-    fsPaths.rooms.ips.collection(params.ip).doc(params.roomId).messages.path
-  );
+  const messagesRef = _getMessagesCollectionRef(params.ip, params.roomId);
 
   return onSnapshot(
     messagesRef,
@@ -57,19 +77,39 @@ export function subscribeToMessages(params: {
   );
 }
 
+function _getMessagesCollectionRef(
+  ip: string,
+  roomId: string
+): CollectionReference {
+  return collection(
+    firestore,
+    fsPaths.rooms.ips.collection(ip).doc(roomId).messages.path
+  );
+}
+
 function _toMessageData(docSnap: QueryDocumentSnapshot): MessageData {
   const data = docSnap.data();
 
-  if (typeof data.content !== 'string') {
-    throw new Error(`Invalid data in message '${docSnap.ref.path}'`);
+  // * Validate presence and structure of 'content'
+  if (
+    typeof data.content !== 'object' ||
+    data.content === null ||
+    typeof data.content.ciphertext !== 'string' ||
+    typeof data.content.iv !== 'string'
+  ) {
+    throw new Error(
+      `Invalid or missing 'content' in message '${docSnap.ref.path}'`
+    );
   }
 
+  // * Validate 'createdAt'
   if (!(data.createdAt instanceof Timestamp)) {
     throw new Error(
       `Invalid or missing 'createdAt' in message '${docSnap.ref.path}'`
     );
   }
 
+  // * Validate 'senderId'
   if (typeof data.senderId !== 'string') {
     throw new Error(
       `Invalid or missing 'senderId' in message '${docSnap.ref.path}'`
@@ -78,7 +118,10 @@ function _toMessageData(docSnap: QueryDocumentSnapshot): MessageData {
 
   return {
     id: docSnap.id,
-    content: data.content,
+    encryptedContent: {
+      ciphertext: data.content.ciphertext,
+      iv: data.content.iv,
+    },
     createdAt: data.createdAt.toDate(),
     senderId: data.senderId,
   };

@@ -8,10 +8,11 @@ import {
 } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
+import { cryptoService, CryptoService, EncryptedData } from '../crypto';
 import { useRoomsStore } from '../rooms';
 import { useUserStore } from '../user';
 import { subscribeToMessages } from './repository';
-import { MessageData } from './types';
+import { EncryptedMessageContent, MessageData } from './types';
 
 interface MessagesState {
   messagesByRoom: Record<string, MessageData[]>;
@@ -22,11 +23,34 @@ interface MessagesState {
 class MessagesStore {
   constructor(
     private state: MessagesState,
-    private setState: SetStoreFunction<MessagesState>
+    private setState: SetStoreFunction<MessagesState>,
+    private cryptoService: CryptoService
   ) {}
 
   getMessagesForRoom(roomId: string): ReadonlyArray<MessageData> {
     return this.state.messagesByRoom[roomId] ?? [];
+  }
+
+  async decryptMessage(params: {
+    roomId: string;
+    messageId: string;
+    encryptedContent: EncryptedMessageContent;
+    roomSalt: string;
+  }): Promise<string | null> {
+    try {
+      const encrypted: EncryptedData = {
+        ciphertext: params.encryptedContent.ciphertext,
+        iv: params.encryptedContent.iv,
+        salt: params.roomSalt,
+      };
+      return await this.cryptoService.decrypt(params.roomId, encrypted);
+    } catch (error) {
+      console.error(
+        `Failed to decrypt message with id '${params.messageId}':`,
+        error
+      );
+      return null;
+    }
   }
 
   isLoading(roomId: string): boolean {
@@ -50,7 +74,7 @@ const MessagesStoreProvider: ParentComponent = (props) => {
   const roomsStore = useRoomsStore();
   const subscriptions = new Map<string, Unsubscribe>();
 
-  const messagesStore = new MessagesStore(state, setState);
+  const messagesStore = new MessagesStore(state, setState, cryptoService);
 
   createEffect(() => {
     const userIp = userStore.ip;
@@ -127,6 +151,7 @@ const MessagesStoreProvider: ParentComponent = (props) => {
   onCleanup(() => {
     subscriptions.forEach((unsubscribe) => unsubscribe());
     subscriptions.clear();
+    cryptoService.destroy();
   });
 
   return (

@@ -1,7 +1,10 @@
 import {
+  addDoc,
   collection,
+  CollectionReference,
   onSnapshot,
   QueryDocumentSnapshot,
+  serverTimestamp,
   Timestamp,
   Unsubscribe,
 } from 'firebase/firestore';
@@ -9,13 +12,31 @@ import {
 import { firestore, fsPaths } from '../firebase';
 import { RoomData } from './types';
 
+export async function createRoom(params: {
+  ip: string;
+  name: string;
+  salt: Uint8Array;
+}): Promise<string> {
+  const roomsRef = _getRoomsCollectionRef(params.ip);
+
+  const saltBase64 = btoa(String.fromCharCode(...params.salt));
+
+  const docRef = await addDoc(roomsRef, {
+    name: params.name,
+    createdAt: serverTimestamp(),
+    salt: saltBase64,
+  });
+
+  return docRef.id;
+}
+
 export function subscribeToRooms(
   ip: string,
   onUpsert: (rooms: RoomData[]) => void,
   onRemove: (roomIds: string[]) => void,
   onError: (error: string) => void
 ): Unsubscribe {
-  const roomsRef = collection(firestore, fsPaths.rooms.ips.collection(ip).path);
+  const roomsRef = _getRoomsCollectionRef(ip);
 
   return onSnapshot(
     roomsRef,
@@ -38,6 +59,7 @@ export function subscribeToRooms(
             roomsToRemove.push(change.doc.id);
             break;
           default:
+            const _exhaustiveCheck: never = change.type;
             console.warn(`New change type (${change.type}) added?`);
             break;
         }
@@ -50,6 +72,10 @@ export function subscribeToRooms(
       onError(error.message);
     }
   );
+}
+
+function _getRoomsCollectionRef(ip: string): CollectionReference {
+  return collection(firestore, fsPaths.rooms.ips.collection(ip).path);
 }
 
 function _toRoomData(docSnap: QueryDocumentSnapshot): RoomData {
@@ -65,9 +91,14 @@ function _toRoomData(docSnap: QueryDocumentSnapshot): RoomData {
     );
   }
 
+  if (typeof data.salt !== 'string') {
+    throw new Error(`Invalid or missing 'salt' in room '${docSnap.ref.path}'`);
+  }
+
   return {
     id: docSnap.id,
     name: data.name,
     createdAt: data.createdAt.toDate(),
+    salt: data.salt,
   };
 }
