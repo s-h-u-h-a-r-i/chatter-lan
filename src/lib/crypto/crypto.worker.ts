@@ -48,6 +48,15 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
   }
 });
 
+/**
+ * ### Initialize a cryptographic key for decryption
+ *
+ * Derives a decryption key from a passphrase and stores it for
+ * subsequent decryption operations, enabling secure key management
+ * isolated from the main thread.
+ *
+ * @param message Initialization request containing passphrase and key identifier
+ */
 async function _handleInit(message: WorkerInitMessage): Promise<void> {
   try {
     const passphraseBuffer = new TextEncoder().encode(message.passphrase);
@@ -92,6 +101,15 @@ async function _handleInit(message: WorkerInitMessage): Promise<void> {
   }
 }
 
+/**
+ * ### Decrypt encrypted data
+ *
+ * Recovers the original plaintext from encrypted data using a
+ * previously initialized key, ensuring sensitive operations remain
+ * isolated from the main application thread.
+ *
+ * @param message Decryption request containing encrypted data and key identifier
+ */
 async function _handleDecrypt(message: WorkerDecryptMessage) {
   const cryptoKey = cryptoKeys.get(message.keyId);
 
@@ -133,6 +151,15 @@ async function _handleDecrypt(message: WorkerDecryptMessage) {
   }
 }
 
+/**
+ * ### Remove a stored cryptographic key
+ *
+ * Permanently removes a key from memory, preventing further decryption
+ * operations and ensuring sensitive key material is cleared when no
+ * longer needed.
+ *
+ * @param message Key removal request containing the key identifier
+ */
 function _handleRemoveKey(message: WorkerRemoveKeyMessage): void {
   cryptoKeys.delete(message.keyId);
   self.postMessage({

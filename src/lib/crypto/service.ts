@@ -1,5 +1,12 @@
 import { EncryptedData, WorkerMessageWithoutId, WorkerResponse } from './types';
 
+/**
+ * ### Cryptographic service for secure decryption
+ *
+ * Provides a safe interface for decrypting encrypted data by isolating
+ * cryptographic operations in a separate thread, preventing sensitive
+ * key material from being exposed to the main application context.
+ */
 export class CryptoService {
   #worker: Worker | null = null;
   #messageId = 0;
@@ -15,6 +22,17 @@ export class CryptoService {
     this.#initializeWorker();
   }
 
+  /**
+   * ### Initialize a cryptographic key for decryption
+   *
+   * Prepares the worker to decrypt data encrypted with the specified
+   * passphrase, enabling subsequent decryption operations.
+   *
+   * @param keyId Unique identifier for the key to be stored
+   * @param passphrase Secret phrase used to derive the decryption key
+   * @param salt Random data used during key derivation to prevent
+   *             rainbow table attacks
+   */
   async init(
     keyId: string,
     passphrase: string,
@@ -28,6 +46,17 @@ export class CryptoService {
     });
   }
 
+  /**
+   * ### Decrypt encrypted data
+   *
+   * Recovers the original plaintext from encrypted data using a
+   * previously initialized key.
+   *
+   * @param keyId Identifier of the key to use for decryption
+   * @param encrypted Encrypted data structure containing the ciphertext
+   *                 and required cryptographic parameters
+   * @returns The decrypted plaintext string
+   */
   async decrypt(keyId: string, encrypted: EncryptedData): Promise<string> {
     const ciphertext = Uint8Array.from(atob(encrypted.ciphertext), (c) =>
       c.charCodeAt(0)
@@ -44,6 +73,14 @@ export class CryptoService {
     });
   }
 
+  /**
+   * ### Remove a stored cryptographic key
+   *
+   * Permanently removes a key from the worker's memory, preventing
+   * further decryption operations with that key and freeing resources.
+   *
+   * @param keyId Identifier of the key to remove
+   */
   async removeKey(keyId: string): Promise<void> {
     await this.#sendMessage({
       type: 'remove-key',
@@ -51,6 +88,12 @@ export class CryptoService {
     });
   }
 
+  /**
+   * ### Clean up service resources
+   *
+   * Terminates the worker and cancels all pending operations, ensuring
+   * proper resource cleanup when the service is no longer needed.
+   */
   destroy() {
     if (this.#worker) {
       this.#worker.terminate();
@@ -62,6 +105,12 @@ export class CryptoService {
     this.#pendingResolvers.clear();
   }
 
+  /**
+   * ### Initialize the worker thread
+   *
+   * Sets up communication with the cryptographic worker and establishes
+   * message handling to coordinate asynchronous operations.
+   */
   #initializeWorker() {
     this.#worker = new Worker(new URL('./crypto.worker.ts', import.meta.url), {
       type: 'module',
@@ -119,6 +168,15 @@ export class CryptoService {
     });
   }
 
+  /**
+   * ### Send a message to the worker
+   *
+   * Coordinates asynchronous communication with the worker by assigning
+   * unique identifiers and managing promise resolution.
+   *
+   * @param message The message to send to the worker
+   * @returns A promise that resolves when the worker responds
+   */
   #sendMessage(message: WorkerMessageWithoutId): Promise<string> {
     if (!this.#worker) {
       return Promise.reject(new Error('Worker not initialized'));
