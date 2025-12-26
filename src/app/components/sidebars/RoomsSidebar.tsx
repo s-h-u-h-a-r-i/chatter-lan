@@ -1,8 +1,8 @@
 import { debounce } from '@solid-primitives/scheduled';
 import { Component, createMemo, createSignal, For } from 'solid-js';
 
-import { BookUser, Hash, Search } from '@/lib/icons';
-import { useRoomsStore } from '@/lib/rooms';
+import { BookUser, Hash, Search } from '@/features/icons';
+import { useRoomsStore } from '@/features/rooms';
 import styles from './RoomsSidebar.module.css';
 import sharedStyles from './shared.module.css';
 

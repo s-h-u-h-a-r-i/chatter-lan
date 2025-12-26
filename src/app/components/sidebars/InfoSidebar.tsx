@@ -1,7 +1,7 @@
 import { Component, JSX, Show } from 'solid-js';
 
-import { Calendar, Hash, Info } from '@/lib/icons';
-import { useRoomsStore } from '@/lib/rooms';
+import { Calendar, Hash, Info } from '@/features/icons';
+import { useRoomsStore } from '@/features/rooms';
 import styles from './InfoSidebar.module.css';
 import sharedStyles from './shared.module.css';
 
