@@ -1,5 +1,6 @@
 import { Component, createEffect, createSignal, Show } from 'solid-js';
 
+import { cryptoService } from '@/core/crypto';
 import { ChatArea, MessagesStoreProvider } from '@/features/messages';
 import {
   InfoSidebar,
@@ -29,9 +30,9 @@ const AppContent: Component = () => {
   createEffect(() => {
     const selectedRoom = roomsStore.selectedRoom;
     if (selectedRoom && !pendingRoomId()) {
-      // * Check if crypto is already initialized for this room
-      // TODO: track this, but for now, always prompt
-      setPendingRoomId(selectedRoom.id);
+      cryptoService.hasKey(selectedRoom.id).then((isInitialized) => {
+        if (!isInitialized) setPendingRoomId(selectedRoom.id);
+      });
     } else if (!selectedRoom && pendingRoomId()) {
       setPendingRoomId(null);
     }
