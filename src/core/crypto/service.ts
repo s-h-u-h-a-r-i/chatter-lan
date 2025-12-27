@@ -112,6 +112,23 @@ export class CryptoService {
   }
 
   /**
+   * ### Check Existence of Cryptographic Key
+   *
+   * Determines if a cryptographic key with the specified identifier exists in the worker's memory.
+   *
+   * @param keyId Identifier of the key to check for existence
+   * @returns A promise resolving to true if the key exists, or false otherwise
+   */
+  async hasKey(keyId: string): Promise<boolean> {
+    const result = await this.#sendMessage({
+      type: 'has-key',
+      keyId,
+    });
+
+    return JSON.parse(result);
+  }
+
+  /**
    * ### Clean up service resources
    *
    * Terminates the worker and cancels all pending operations, ensuring
@@ -162,16 +179,18 @@ export class CryptoService {
           case 'init-error':
           case 'decrypt-error':
           case 'encrypt-error':
-          case 'remove-key-error':
             reject(new Error(response.error));
             break;
           case 'init-success':
-          case 'remove-key-success':
+          case 'remove-key':
             resolve('success');
             break;
           case 'decrypt-success':
           case 'encrypt-success':
             resolve(response.data || '');
+            break;
+          case 'has-key':
+            resolve(response.data !== undefined ? response.data : 'false');
             break;
           default:
             const _exhaustiveCheck: never = response;

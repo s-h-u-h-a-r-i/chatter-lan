@@ -185,6 +185,32 @@ export interface WorkerRemoveKeyMessage {
 }
 
 /**
+ * ### Worker key existence check message
+ *
+ * Requests the worker to check if a cryptographic key with a specific identifier exists in memory.
+ * This is useful for verifying key presence without exposing key material or attempting key operations.
+ */
+export interface WorkerHasKeyMessage {
+  /**
+   * String literal identifying the message as a key existence check request.
+   * Allows the worker to recognize and handle "has-key" operations.
+   */
+  type: 'has-key';
+
+  /**
+   * Unique identifier for correlating this request with the corresponding worker response.
+   * Facilitates reliable asynchronous request/response matching.
+   */
+  id: number;
+
+  /**
+   * Identifier referencing the cryptographic key whose existence is being checked.
+   * Ensures the check is performed for the correct key instance.
+   */
+  keyId: string;
+}
+
+/**
  * ### Worker initialization message without request identifier
  *
  * Enables constructing initialization messages before assigning request identifiers,
@@ -221,6 +247,15 @@ export interface WorkerRemoveKeyMessageWithoutId
   extends Omit<WorkerRemoveKeyMessage, 'id'> {}
 
 /**
+ * ### Worker has-key message without request identifier
+ *
+ * Enables constructing messages to check the existence of a cryptographic key before assigning request identifiers,
+ * supporting a clear separation between message structure and tracking.
+ */
+export interface WorkerHasKeyMessageWithoutId
+  extends Omit<WorkerHasKeyMessage, 'id'> {}
+
+/**
  * ### Worker success response
  *
  * Represents a successful completion of a worker operation, enabling reliable
@@ -236,7 +271,8 @@ export interface WorkerSuccessResponse {
     | 'init-success'
     | 'decrypt-success'
     | 'encrypt-success'
-    | 'remove-key-success';
+    | 'remove-key'
+    | 'has-key';
 
   /**
    * Unique identifier matching the original request that triggered this response
@@ -265,7 +301,7 @@ export interface WorkerErrorResponse {
    *
    * Enables the caller to distinguish between different error types and handle them appropriately.
    */
-  type: 'init-error' | 'decrypt-error' | 'encrypt-error' | 'remove-key-error';
+  type: 'init-error' | 'decrypt-error' | 'encrypt-error';
 
   /**
    * Unique identifier matching the original request that triggered this error response
@@ -300,7 +336,8 @@ export type WorkerMessage =
   | WorkerInitMessage
   | WorkerDecryptMessage
   | WorkerEncryptMessage
-  | WorkerRemoveKeyMessage;
+  | WorkerRemoveKeyMessage
+  | WorkerHasKeyMessage;
 
 /**
  * ### Worker message union type without request identifiers
@@ -312,4 +349,5 @@ export type WorkerMessageWithoutId =
   | WorkerInitMessageWithoutId
   | WorkerDecryptMessageWithoutId
   | WorkerEncryptMessageWithoutId
-  | WorkerRemoveKeyMessageWithoutId;
+  | WorkerRemoveKeyMessageWithoutId
+  | WorkerHasKeyMessageWithoutId;

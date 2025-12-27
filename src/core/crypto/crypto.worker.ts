@@ -3,6 +3,7 @@
 import type {
   WorkerDecryptMessage,
   WorkerEncryptMessage,
+  WorkerHasKeyMessage,
   WorkerInitMessage,
   WorkerMessage,
   WorkerRemoveKeyMessage,
@@ -28,6 +29,9 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
         break;
       case 'remove-key':
         _handleRemoveKey(message);
+        break;
+      case 'has-key':
+        _handleHasKey(message);
         break;
       default: {
         const _exhaustiveCheck: never = message;
@@ -218,7 +222,25 @@ async function _handleEncrypt(message: WorkerEncryptMessage): Promise<void> {
 function _handleRemoveKey(message: WorkerRemoveKeyMessage): void {
   cryptoKeys.delete(message.keyId);
   self.postMessage({
-    type: 'remove-key-success',
+    type: 'remove-key',
     id: message.id,
+  } satisfies WorkerResponse);
+}
+
+/**
+ * ### Check Existence of Cryptographic Key
+ *
+ * Handles a request to determine whether a cryptographic key
+ * with the specified identifier currently exists in the worker's memory.
+ * Responds with a 'has-key' message and a corresponding string indicating
+ * key presence ("true" or "false").
+ *
+ * @param message Message containing the key identifier and request id
+ */
+async function _handleHasKey(message: WorkerHasKeyMessage): Promise<void> {
+  self.postMessage({
+    type: 'has-key',
+    id: message.id,
+    data: cryptoKeys.has(message.keyId) ? 'true' : 'false',
   } satisfies WorkerResponse);
 }
