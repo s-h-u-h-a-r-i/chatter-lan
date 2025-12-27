@@ -1,4 +1,3 @@
-import { Unsubscribe } from 'firebase/firestore';
 import {
   createContext,
   createEffect,
@@ -8,10 +7,11 @@ import {
 } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
+import { FirestoreSubscriptionManager } from '@/core/firebase';
 import { cryptoService, CryptoService, EncryptedData } from '../../core/crypto';
 import { useRoomsStore } from '../room';
 import { useUserStore } from '../user';
-import { subscribeToMessages } from './message.repository';
+import * as messageRepo from './message.repository';
 import { EncryptedMessageContent, MessageData } from './message.types';
 
 interface MessagesState {
@@ -72,7 +72,7 @@ const MessagesStoreProvider: ParentComponent = (props) => {
   });
   const userStore = useUserStore();
   const roomsStore = useRoomsStore();
-  const subscriptions = new Map<string, Unsubscribe>();
+  const subscriptionManager = new FirestoreSubscriptionManager();
 
   const messagesStore = new MessagesStore(state, setState, cryptoService);
 
@@ -82,16 +82,12 @@ const MessagesStoreProvider: ParentComponent = (props) => {
     if (roomsStore.loading) return;
 
     const currentRoomIds = new Set(roomsStore.rooms.map((r) => r.id));
-    const subscribedRoomIds = new Set(subscriptions.keys());
+    const subscribedRoomIds = new Set(subscriptionManager.keys);
 
     // * Unsubscribe from rooms that no longer exist
     subscribedRoomIds.forEach((roomId) => {
       if (!currentRoomIds.has(roomId)) {
-        const unsubscribe = subscriptions.get(roomId);
-        if (unsubscribe) {
-          unsubscribe();
-          subscriptions.delete(roomId);
-        }
+        subscriptionManager.unsubscribe(roomId);
         // * Delete keys by reconstructing the objects without those keys
         setState('messagesByRoom', (prev) => {
           const { [roomId]: _, ...rest } = prev;
@@ -110,47 +106,51 @@ const MessagesStoreProvider: ParentComponent = (props) => {
 
     // * Subscribe to new rooms
     currentRoomIds.forEach((roomId) => {
-      if (!subscriptions.has(roomId)) {
+      if (!subscriptionManager.has(roomId)) {
         setState('messagesByRoom', roomId, []);
         setState('loadingByRoom', roomId, true);
         setState('errorsByRoom', roomId, null);
 
-        const unsubscribe = subscribeToMessages({
-          ip: userIp,
-          roomId: roomId,
-          onUpsert(messages) {
-            setState('loadingByRoom', roomId, false);
-            setState('messagesByRoom', roomId, (prev) => {
-              const existingIds = new Set(prev.map((m) => m.id));
-              const newMessages = messages.filter(
-                (m) => !existingIds.has(m.id)
-              );
-              return [...prev, ...newMessages].sort(
-                (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
-              );
-            });
-          },
-          onRemove(messageIds) {
-            setState('messagesByRoom', roomId, (prev) => {
-              const existing = prev ?? [];
-              return existing.filter((m) => !messageIds.includes(m.id));
-            });
-          },
-          onError(error) {
-            setState('errorsByRoom', roomId, error);
-            setState('loadingByRoom', roomId, false);
-            subscriptions.delete(roomId);
-          },
-        });
+        const onUpsert = (messages: MessageData[]) => {
+          setState('loadingByRoom', roomId, false);
+          setState('messagesByRoom', roomId, (prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const newMessages = messages.filter((m) => !existingIds.has(m.id));
+            return [...prev, ...newMessages].sort(
+              (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+            );
+          });
+        };
 
-        subscriptions.set(roomId, unsubscribe);
+        const onRemove = (messageIds: string[]) => {
+          setState('messagesByRoom', roomId, (prev) => {
+            const existing = prev ?? [];
+            return existing.filter((m) => !messageIds.includes(m.id));
+          });
+        };
+
+        const onError = (error: string) => {
+          setState('errorsByRoom', roomId, error);
+          setState('loadingByRoom', roomId, false);
+          subscriptionManager.unsubscribe(roomId);
+        };
+
+        subscriptionManager.subscribe(
+          roomId,
+          messageRepo.subscribeToMessages({
+            ip: userIp,
+            roomId: roomId,
+            onUpsert,
+            onRemove,
+            onError,
+          })
+        );
       }
     });
   });
 
   onCleanup(() => {
-    subscriptions.forEach((unsubscribe) => unsubscribe());
-    subscriptions.clear();
+    subscriptionManager.clear();
     cryptoService.destroy();
   });
 

@@ -1,4 +1,3 @@
-import { Unsubscribe } from 'firebase/firestore';
 import {
   createContext,
   createEffect,
@@ -8,8 +7,9 @@ import {
 } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
+import { FirestoreSubscriptionManager } from '@/core/firebase';
 import { useUserStore } from '../user';
-import { subscribeToRooms } from './room.repository';
+import * as roomRepo from './room.repository';
 import { RoomData } from './room.types';
 
 interface RoomsState {
@@ -18,6 +18,8 @@ interface RoomsState {
   loading: boolean;
   error: string | null;
 }
+
+const ROOMS_SUBSCRIPTION_KEY = 'rooms' as const;
 
 class RoomsStore {
   constructor(
@@ -58,15 +60,12 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     error: null,
   });
   const userStore = useUserStore();
-  let unsubscribe: Unsubscribe | null = null;
+  const subscriptionManager = new FirestoreSubscriptionManager();
 
   const roomsStore = new RoomsStore(state, setState);
 
   createEffect(() => {
-    if (unsubscribe) {
-      unsubscribe();
-      unsubscribe = null;
-    }
+    subscriptionManager.unsubscribe(ROOMS_SUBSCRIPTION_KEY);
 
     setState({ error: null, loading: true });
 
@@ -79,44 +78,39 @@ const RoomsStoreProvider: ParentComponent = (props) => {
       return;
     }
 
-    unsubscribe = subscribeToRooms(
-      userStore.ip,
-      (rooms) => {
-        setState('loading', false);
-        setState('rooms', (prev) => {
-          const updatedRooms = [...prev];
-          rooms.forEach((incomingRoom) => {
-            const index = updatedRooms.findIndex(
-              (r) => r.id === incomingRoom.id
-            );
-            if (index >= 0) {
-              updatedRooms[index] = incomingRoom;
-            } else {
-              updatedRooms.push(incomingRoom);
-            }
-          });
-          return updatedRooms;
+    const onUpsert = (rooms: RoomData[]) => {
+      setState('loading', false);
+      setState('rooms', (prev) => {
+        const updatedRooms = [...prev];
+        rooms.forEach((incomingRoom) => {
+          const index = updatedRooms.findIndex((r) => r.id === incomingRoom.id);
+          if (index >= 0) {
+            updatedRooms[index] = incomingRoom;
+          } else {
+            updatedRooms.push(incomingRoom);
+          }
         });
-      },
-      (roomIds) => {
-        setState('rooms', (prev) =>
-          prev.filter((r) => !roomIds.includes(r.id))
-        );
-      },
-      (error) => {
-        // * No need to reset error to null in prior callbacks since
-        // * receiving an error here indicates the observer will stop,
-        // * and no further updates will occur.
-        setState('error', error);
-        setState('loading', false);
-      }
+        return updatedRooms;
+      });
+    };
+
+    const onRemove = (roomIds: string[]) => {
+      setState('rooms', (prev) => prev.filter((r) => !roomIds.includes(r.id)));
+    };
+
+    const onError = (error: string) => {
+      setState('error', error);
+      setState('loading', false);
+    };
+
+    subscriptionManager.subscribe(
+      ROOMS_SUBSCRIPTION_KEY,
+      roomRepo.subscribeToRooms(userStore.ip, onUpsert, onRemove, onError)
     );
   });
 
   onCleanup(() => {
-    if (unsubscribe) {
-      unsubscribe();
-    }
+    subscriptionManager.clear();
   });
 
   return (
