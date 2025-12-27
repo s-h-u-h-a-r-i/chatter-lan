@@ -1,7 +1,7 @@
 import { Component, createSignal } from 'solid-js';
 
 import { Modal } from '@/components/ui';
-import { cryptoService } from '@/features/crypto';
+import { cryptoService } from '@/core/crypto';
 import styles from './index.module.css';
 
 type FormSubmitEvent = SubmitEvent & {

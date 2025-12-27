@@ -8,7 +8,7 @@ import {
 } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
-import { cryptoService, CryptoService, EncryptedData } from '../crypto';
+import { cryptoService, CryptoService, EncryptedData } from '../../core/crypto';
 import { useRoomsStore } from '../rooms';
 import { useUserStore } from '../user';
 import { subscribeToMessages } from './repository';
