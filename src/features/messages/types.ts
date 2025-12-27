@@ -10,6 +10,7 @@ export interface MessageData {
   encryptedContent: EncryptedMessageContent;
   createdAt: Date;
   senderId: string;
+  senderName: string;
   // viewerIds: string[]
 }
 
@@ -17,4 +18,5 @@ export interface MessageFirestoreData extends DocumentData {
   content: EncryptedMessageContent;
   createdAt: Timestamp;
   senderId: string;
+  senderName: string;
 }

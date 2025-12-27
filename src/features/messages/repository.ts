@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 
 import { firestore, fsPaths } from '@/core/firebase';
+import { isObject } from '@/core/guards';
 import { EncryptedMessageContent, MessageData } from './types';
 
 export async function createMessage(params: {
@@ -92,8 +93,7 @@ function _toMessageData(docSnap: QueryDocumentSnapshot): MessageData {
 
   // * Validate presence and structure of 'content'
   if (
-    typeof data.content !== 'object' ||
-    data.content === null ||
+    !isObject(data.content) ||
     typeof data.content.ciphertext !== 'string' ||
     typeof data.content.iv !== 'string'
   ) {
@@ -116,6 +116,12 @@ function _toMessageData(docSnap: QueryDocumentSnapshot): MessageData {
     );
   }
 
+  if (typeof data.senderName !== 'string') {
+    throw new Error(
+      `Invalid or missing 'senderName' in message '${docSnap.ref.path}'`
+    );
+  }
+
   return {
     id: docSnap.id,
     encryptedContent: {
@@ -124,5 +130,6 @@ function _toMessageData(docSnap: QueryDocumentSnapshot): MessageData {
     },
     createdAt: data.createdAt.toDate(),
     senderId: data.senderId,
+    senderName: data.senderName,
   };
 }
