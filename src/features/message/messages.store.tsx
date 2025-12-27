@@ -9,10 +9,10 @@ import {
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
 import { cryptoService, CryptoService, EncryptedData } from '../../core/crypto';
-import { useRoomsStore } from '../rooms';
+import { useRoomsStore } from '../room';
 import { useUserStore } from '../user';
-import { subscribeToMessages } from './repository';
-import { EncryptedMessageContent, MessageData } from './types';
+import { subscribeToMessages } from './message.repository';
+import { EncryptedMessageContent, MessageData } from './message.types';
 
 interface MessagesState {
   messagesByRoom: Record<string, MessageData[]>;

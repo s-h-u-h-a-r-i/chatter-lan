@@ -3,7 +3,7 @@ import { createContext, onMount, ParentComponent, useContext } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
 import { auth } from '@/core/firebase';
-import { fetchPublicIp } from './service';
+import { fetchPublicIp } from './user.service';
 
 interface UserState {
   ip: string | null;
@@ -83,4 +83,4 @@ function useUserStore() {
   return context;
 }
 
-export { UserStoreProvider, useUserStore };
+export { UserStoreProvider, useUserStore, type UserStore };

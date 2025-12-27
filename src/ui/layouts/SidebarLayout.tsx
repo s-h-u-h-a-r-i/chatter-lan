@@ -1,6 +1,6 @@
 import { Component, JSX } from 'solid-js';
 
-import styles from './index.module.css';
+import styles from './SidebarLayout.module.css';
 
 export const SidebarLayout: Component<{
   children: JSX.Element;

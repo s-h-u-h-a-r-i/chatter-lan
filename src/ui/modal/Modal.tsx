@@ -1,6 +1,6 @@
 import { Component, JSX, onCleanup, onMount, Show } from 'solid-js';
 
-import styles from './index.module.css';
+import styles from './Modal.module.css';
 
 export const Modal: Component<{
   isOpen: boolean;

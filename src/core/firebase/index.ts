@@ -1,2 +1,2 @@
-export * from './client';
+export * from './firebase.client';
 export * from './firestore';

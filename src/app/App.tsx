@@ -1,14 +1,14 @@
 import { Component, createEffect, createSignal, Show } from 'solid-js';
 
 import { cryptoService } from '@/core/crypto';
-import { ChatArea, MessagesStoreProvider } from '@/features/messages';
+import { ChatArea, MessagesStoreProvider } from '@/features/message';
 import {
   InfoSidebar,
   RoomPassphraseModal,
   RoomsSidebar,
   RoomsStoreProvider,
   useRoomsStore,
-} from '@/features/rooms';
+} from '@/features/room';
 import { UserStoreProvider } from '@/features/user';
 import styles from './App.module.css';
 

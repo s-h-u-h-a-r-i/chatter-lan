@@ -1,9 +1,9 @@
 import { Component, createMemo, createSignal, For } from 'solid-js';
 
-import { BookUser, Hash, Search } from '@/components/icons';
-import { SidebarLayout } from '@/components/ui';
+import { BookUser, Hash, Search } from '@/ui/icons';
+import { SidebarLayout } from '@/ui/layouts';
 import { debounce } from '@solid-primitives/scheduled';
-import { useRoomsStore } from '../../store';
+import { useRoomsStore } from '../../rooms.store';
 import styles from './index.module.css';
 
 const Header: Component<{ setSearchTerm(searchTerm: string): void }> = (

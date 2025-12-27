@@ -1,4 +1,8 @@
-import { EncryptedData, WorkerMessageWithoutId, WorkerResponse } from './types';
+import {
+  EncryptedData,
+  WorkerMessageWithoutId,
+  WorkerResponse,
+} from './crypto.types';
 
 /**
  * ### Cryptographic service for secure decryption

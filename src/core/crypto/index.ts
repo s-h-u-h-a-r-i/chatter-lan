@@ -1,7 +1,7 @@
-import { CryptoService } from './service';
+import { CryptoService } from './crypto.service';
 
-export type { CryptoService } from './service';
-export * from './types';
+export type { CryptoService } from './crypto.service';
+export * from './crypto.types';
 
 /**
  * ### Shared instance of the cryptographic service

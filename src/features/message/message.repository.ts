@@ -11,7 +11,7 @@ import {
 
 import { firestore, fsPaths } from '@/core/firebase';
 import { isObject } from '@/core/guards';
-import { EncryptedMessageContent, MessageData } from './types';
+import { EncryptedMessageContent, MessageData } from './message.types';
 
 export async function createMessage(params: {
   ip: string;

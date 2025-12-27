@@ -1,8 +1,8 @@
 import { Component, JSX, Show } from 'solid-js';
 
-import { Calendar, Hash, Info } from '@/components/icons';
-import { SidebarLayout } from '@/components/ui';
-import { useRoomsStore } from '../../store';
+import { Calendar, Hash, Info } from '@/ui/icons';
+import { SidebarLayout } from '@/ui/layouts';
+import { useRoomsStore } from '../../rooms.store';
 import styles from './index.module.css';
 
 const Header: Component = (props) => (

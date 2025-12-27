@@ -10,7 +10,7 @@ import {
 } from 'firebase/firestore';
 
 import { firestore, fsPaths } from '@/core/firebase';
-import { RoomData } from './types';
+import { RoomData } from './room.types';
 
 export async function createRoom(params: {
   ip: string;

@@ -1,1 +1,1 @@
-export * from './paths';
+export * from './firestore-paths';
