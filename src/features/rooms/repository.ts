@@ -9,7 +9,7 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 
-import { firestore, fsPaths } from '../firebase';
+import { firestore, fsPaths } from '@/core/firebase';
 import { RoomData } from './types';
 
 export async function createRoom(params: {

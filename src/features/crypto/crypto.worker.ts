@@ -1,5 +1,3 @@
-// /src/lib/crypto/crypto.worker.ts
-
 /// <reference lib="webworker" />
 
 import type {

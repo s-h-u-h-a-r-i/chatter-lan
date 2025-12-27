@@ -2,7 +2,7 @@ import { signInAnonymously } from 'firebase/auth';
 import { createContext, onMount, ParentComponent, useContext } from 'solid-js';
 import { createStore, SetStoreFunction } from 'solid-js/store';
 
-import { auth } from '../firebase';
+import { auth } from '@/core/firebase';
 import { fetchPublicIp } from './service';
 
 interface UserState {

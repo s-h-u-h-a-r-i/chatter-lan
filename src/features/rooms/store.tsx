@@ -43,7 +43,7 @@ class RoomsStore {
     return this.state.error;
   }
 
-  setSelectedRoomId(id: string) {
+  setSelectedRoomId(id: string | null) {
     this.setState('selectedRoomId', id);
   }
 }
