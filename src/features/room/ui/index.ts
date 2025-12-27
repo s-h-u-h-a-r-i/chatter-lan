@@ -1,3 +1,3 @@
-export * from './info-sidebar';
-export * from './passphrase-modal';
-export * from './rooms-sidebar';
+export * from './InfoSidebar';
+export * from './PassphraseModal';
+export * from './RoomListSidebar';

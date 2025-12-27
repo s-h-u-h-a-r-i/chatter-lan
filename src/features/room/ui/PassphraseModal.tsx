@@ -2,7 +2,7 @@ import { Component, createSignal } from 'solid-js';
 
 import { cryptoService } from '@/core/crypto';
 import { Modal } from '@/ui/modal';
-import styles from './index.module.css';
+import styles from './PassphraseModal.module.css';
 
 type FormSubmitEvent = SubmitEvent & {
   currentTarget: HTMLFormElement;

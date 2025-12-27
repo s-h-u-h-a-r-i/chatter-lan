@@ -5,7 +5,7 @@ import { ChatArea, MessagesStoreProvider } from '@/features/message';
 import {
   InfoSidebar,
   RoomPassphraseModal,
-  RoomsSidebar,
+  RoomsListSidebar,
   RoomsStoreProvider,
   useRoomsStore,
 } from '@/features/room';
@@ -40,7 +40,7 @@ const AppContent: Component = () => {
 
   return (
     <div class={styles.app}>
-      <RoomsSidebar isOpen={roomsSidebarOpen()} />
+      <RoomsListSidebar isOpen={roomsSidebarOpen()} />
       <ChatArea />
       <InfoSidebar isOpen={infoSidebarOpen()} />
       <Show when={pendingRoom()}>

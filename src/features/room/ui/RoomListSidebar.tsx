@@ -3,8 +3,8 @@ import { Component, createMemo, createSignal, For } from 'solid-js';
 import { BookUser, Hash, Search } from '@/ui/icons';
 import { SidebarLayout } from '@/ui/layouts';
 import { debounce } from '@solid-primitives/scheduled';
-import { useRoomsStore } from '../../rooms.store';
-import styles from './index.module.css';
+import { useRoomsStore } from '../rooms.store';
+import styles from './RoomListSidebar.module.css';
 
 const Header: Component<{ setSearchTerm(searchTerm: string): void }> = (
   props
@@ -33,7 +33,7 @@ const Header: Component<{ setSearchTerm(searchTerm: string): void }> = (
   );
 };
 
-export const RoomsSidebar: Component<{ isOpen: boolean }> = (props) => {
+export const RoomsListSidebar: Component<{ isOpen: boolean }> = (props) => {
   const [searchTerm, setSearchTerm] = createSignal('');
   const roomsStore = useRoomsStore();
 
