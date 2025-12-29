@@ -9,11 +9,11 @@ import {
 } from 'solid-js';
 
 import { FirestoreSubscriptionManager } from '@/core/firebase';
-import { cryptoService, EncryptedData } from '../../core/crypto';
+import { cryptoService } from '../../core/crypto';
 import { useRoomsStore } from '../room';
 import { useUserStore } from '../user';
 import * as messageRepo from './message.repository';
-import { EncryptedMessageContent, MessageData } from './message.types';
+import { MessageData } from './message.types';
 
 type MessagesByRoomId = Record<string, Accessor<MessageData[]>>;
 type LoadingByRoomId = Record<string, Accessor<boolean>>;
@@ -23,11 +23,6 @@ interface MessagesStoreContext {
   messages(roomId: string): MessageData[];
   loading(roomId: string): boolean;
   error(roomId: string): string | null;
-  decryptMessage(params: {
-    roomId: string;
-    encryptedContent: EncryptedMessageContent;
-    roomSalt: string;
-  }): Promise<string | null>;
 }
 
 const MessagesStoreContext = createContext<MessagesStoreContext>();
@@ -107,19 +102,6 @@ const MessagesStoreProvider: ParentComponent = (props) => {
     },
     error(roomId) {
       return errorsByRoom[roomId]?.() ?? null;
-    },
-    async decryptMessage({ roomId, encryptedContent, roomSalt }) {
-      try {
-        const encrypted: EncryptedData = {
-          ciphertext: encryptedContent.ciphertext,
-          iv: encryptedContent.iv,
-          salt: roomSalt,
-        };
-        return await cryptoService.decrypt(roomId, encrypted);
-      } catch (e) {
-        console.error('Failed to decrypt message', e);
-        return null;
-      }
     },
   };
 
