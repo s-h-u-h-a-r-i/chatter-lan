@@ -1,75 +1,61 @@
 import { signInAnonymously } from 'firebase/auth';
-import { createContext, onMount, ParentComponent, useContext } from 'solid-js';
-import { createStore, SetStoreFunction } from 'solid-js/store';
+import {
+  Accessor,
+  createContext,
+  createSignal,
+  onMount,
+  ParentComponent,
+  useContext,
+} from 'solid-js';
 
 import { auth } from '@/core/firebase';
 import { fetchPublicIp } from './user.service';
 
-interface UserState {
-  ip: string | null;
-  uid: string | null;
-  name: string | null;
-  loading: boolean;
-  error: string | null;
+interface UserStoreContext {
+  ip: Accessor<string | null>;
+  uid: Accessor<string | null>;
+  name: Accessor<string | null>;
+  loading: Accessor<boolean>;
+  error: Accessor<string | null>;
 }
 
-class UserStore {
-  constructor(
-    private state: UserState,
-    private setState: SetStoreFunction<UserState>
-  ) {}
-
-  get ip(): string | null {
-    return this.state.ip;
-  }
-
-  get name(): string | null {
-    return this.state.name;
-  }
-
-  get loading(): boolean {
-    return this.state.loading;
-  }
-
-  get error(): string | null {
-    return this.state.error;
-  }
-}
-
-const UserStoreContext = createContext<UserStore>();
+const UserStoreContext = createContext<UserStoreContext>();
 
 const UserStoreProvider: ParentComponent = (props) => {
-  const [state, setState] = createStore<UserState>({
-    ip: null,
-    uid: null,
-    name: null,
-    loading: true,
-    error: null,
-  });
-
-  const userStore = new UserStore(state, setState);
+  const [ip, setIp] = createSignal<string | null>(null);
+  const [uid, setUid] = createSignal<string | null>(null);
+  const [name, setName] = createSignal<string | null>(null);
+  const [loading, setLoading] = createSignal(true);
+  const [error, setError] = createSignal<string | null>(null);
 
   onMount(async () => {
     try {
-      const [userCredential, ip] = await Promise.all([
+      const [userCredential, publicIp] = await Promise.all([
         signInAnonymously(auth),
         fetchPublicIp(),
       ]);
-      const uid = userCredential.user.uid;
-      setState({ ip, uid, loading: false, error: null });
-    } catch (error) {
-      setState({
-        loading: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Failed to sign in or fetch IP',
-      });
+
+      setUid(userCredential.user.uid);
+      setIp(publicIp);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to sign in or fetch IP'
+      );
+    } finally {
+      setLoading(false);
     }
   });
 
+  const context: UserStoreContext = {
+    ip,
+    uid,
+    name,
+    loading,
+    error,
+  };
+
   return (
-    <UserStoreContext.Provider value={userStore}>
+    <UserStoreContext.Provider value={context}>
       {props.children}
     </UserStoreContext.Provider>
   );
@@ -83,4 +69,4 @@ function useUserStore() {
   return context;
 }
 
-export { UserStoreProvider, useUserStore, type UserStore };
+export { UserStoreProvider, useUserStore };

@@ -36,7 +36,7 @@ export async function createMessage(params: {
 export function subscribeToMessages(params: {
   ip: string;
   roomId: string;
-  onUpsert: (messages: MessageData[]) => void;
+  onUpsert: (incoming: MessageData[]) => void;
   onRemove: (messageIds: string[]) => void;
   onError: (error: string) => void;
 }): Unsubscribe {

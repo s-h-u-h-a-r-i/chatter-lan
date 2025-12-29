@@ -1,161 +1,131 @@
 import {
+  Accessor,
   createContext,
   createEffect,
+  createSignal,
   onCleanup,
   ParentComponent,
   useContext,
 } from 'solid-js';
-import { createStore, SetStoreFunction } from 'solid-js/store';
 
 import { FirestoreSubscriptionManager } from '@/core/firebase';
-import { cryptoService, CryptoService, EncryptedData } from '../../core/crypto';
+import { cryptoService, EncryptedData } from '../../core/crypto';
 import { useRoomsStore } from '../room';
 import { useUserStore } from '../user';
 import * as messageRepo from './message.repository';
 import { EncryptedMessageContent, MessageData } from './message.types';
 
-interface MessagesState {
-  messagesByRoom: Record<string, MessageData[]>;
-  loadingByRoom: Record<string, boolean>;
-  errorsByRoom: Record<string, string | null>;
-}
+type MessagesByRoom = Record<string, Accessor<MessageData[]>>;
+type LoadingByRoom = Record<string, Accessor<boolean>>;
+type ErrorsByRoom = Record<string, Accessor<string | null>>;
 
-class MessagesStore {
-  constructor(
-    private state: MessagesState,
-    private setState: SetStoreFunction<MessagesState>,
-    private cryptoService: CryptoService
-  ) {}
-
-  getMessagesForRoom(roomId: string): ReadonlyArray<MessageData> {
-    return this.state.messagesByRoom[roomId] ?? [];
-  }
-
-  async decryptMessage(params: {
+interface MessagesStoreContext {
+  messages(roomId: string): MessageData[];
+  isLoading(roomId: string): boolean;
+  error(roomId: string): string | null;
+  decryptMessage(params: {
     roomId: string;
     messageId: string;
     encryptedContent: EncryptedMessageContent;
     roomSalt: string;
-  }): Promise<string | null> {
-    try {
-      const encrypted: EncryptedData = {
-        ciphertext: params.encryptedContent.ciphertext,
-        iv: params.encryptedContent.iv,
-        salt: params.roomSalt,
-      };
-      return await this.cryptoService.decrypt(params.roomId, encrypted);
-    } catch (error) {
-      console.error(
-        `Failed to decrypt message with id '${params.messageId}':`,
-        error
-      );
-      return null;
-    }
-  }
-
-  isLoading(roomId: string): boolean {
-    return this.state.loadingByRoom[roomId] ?? false;
-  }
-
-  getError(roomId: string): string | null {
-    return this.state.errorsByRoom[roomId] ?? null;
-  }
+  }): Promise<string | null>;
 }
 
-const MessagesStoreContext = createContext<MessagesStore>();
+const MessagesStoreContext = createContext<MessagesStoreContext>();
 
 const MessagesStoreProvider: ParentComponent = (props) => {
-  const [state, setState] = createStore<MessagesState>({
-    messagesByRoom: {},
-    loadingByRoom: {},
-    errorsByRoom: {},
-  });
   const userStore = useUserStore();
   const roomsStore = useRoomsStore();
-  const subscriptionManager = new FirestoreSubscriptionManager();
+  const subscriptions = new FirestoreSubscriptionManager();
 
-  const messagesStore = new MessagesStore(state, setState, cryptoService);
+  const messagesByRoom: MessagesByRoom = {};
+  const loadingByRoom: LoadingByRoom = {};
+  const errorsByRoom: ErrorsByRoom = {};
 
   createEffect(() => {
-    const userIp = userStore.ip;
-    if (userStore.loading || userIp === null) return;
-    if (roomsStore.loading) return;
+    if (userStore.loading() || roomsStore.loading()) return;
+    const ip = userStore.ip();
+    if (!ip) return;
 
-    const currentRoomIds = new Set(roomsStore.rooms.map((r) => r.id));
-    const subscribedRoomIds = new Set(subscriptionManager.keys);
+    const currentRoomIds = new Set(roomsStore.rooms().map((r) => r.id));
+    const subscribedRoomIds = new Set(subscriptions.keys);
 
-    // * Unsubscribe from rooms that no longer exist
+    // * Unsubscribe removed rooms
     subscribedRoomIds.forEach((roomId) => {
-      if (!currentRoomIds.has(roomId)) {
-        subscriptionManager.unsubscribe(roomId);
-        // * Delete keys by reconstructing the objects without those keys
-        setState('messagesByRoom', (prev) => {
-          const { [roomId]: _, ...rest } = prev;
-          return rest;
-        });
-        setState('loadingByRoom', (prev) => {
-          const { [roomId]: _, ...rest } = prev;
-          return rest;
-        });
-        setState('errorsByRoom', (prev) => {
-          const { [roomId]: _, ...rest } = prev;
-          return rest;
-        });
-      }
+      if (currentRoomIds.has(roomId)) return;
+
+      subscriptions.unsubscribe(roomId);
+      delete messagesByRoom[roomId];
+      delete loadingByRoom[roomId];
+      delete errorsByRoom[roomId];
     });
 
     // * Subscribe to new rooms
     currentRoomIds.forEach((roomId) => {
-      if (!subscriptionManager.has(roomId)) {
-        setState('messagesByRoom', roomId, []);
-        setState('loadingByRoom', roomId, true);
-        setState('errorsByRoom', roomId, null);
+      if (subscriptions.has(roomId)) return;
 
-        const onUpsert = (messages: MessageData[]) => {
-          setState('loadingByRoom', roomId, false);
-          setState('messagesByRoom', roomId, (prev) => {
-            const existingIds = new Set(prev.map((m) => m.id));
-            const newMessages = messages.filter((m) => !existingIds.has(m.id));
-            return [...prev, ...newMessages].sort(
-              (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
-            );
-          });
-        };
+      const [messages, setMessages] = createSignal<MessageData[]>([]);
+      const [loading, setLoading] = createSignal(true);
+      const [error, setError] = createSignal<string | null>(null);
 
-        const onRemove = (messageIds: string[]) => {
-          setState('messagesByRoom', roomId, (prev) => {
-            const existing = prev ?? [];
-            return existing.filter((m) => !messageIds.includes(m.id));
-          });
-        };
+      messagesByRoom[roomId] = messages;
+      loadingByRoom[roomId] = loading;
+      errorsByRoom[roomId] = error;
 
-        const onError = (error: string) => {
-          setState('errorsByRoom', roomId, error);
-          setState('loadingByRoom', roomId, false);
-          subscriptionManager.unsubscribe(roomId);
-        };
-
-        subscriptionManager.subscribe(
+      subscriptions.subscribe(
+        roomId,
+        messageRepo.subscribeToMessages({
+          ip,
           roomId,
-          messageRepo.subscribeToMessages({
-            ip: userIp,
-            roomId: roomId,
-            onUpsert,
-            onRemove,
-            onError,
-          })
-        );
-      }
+          onUpsert(incoming) {
+            setLoading(false);
+            setMessages((prev) => _mergeMessages(prev, incoming));
+          },
+          onRemove(ids) {
+            setMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
+          },
+          onError(err) {
+            setError(err);
+            setLoading(false);
+            subscriptions.unsubscribe(roomId);
+          },
+        })
+      );
     });
   });
 
   onCleanup(() => {
-    subscriptionManager.clear();
+    subscriptions.clear();
     cryptoService.destroy();
   });
 
+  const context: MessagesStoreContext = {
+    messages(roomId) {
+      return messagesByRoom[roomId]?.() ?? [];
+    },
+    isLoading(roomId) {
+      return loadingByRoom[roomId]?.() ?? false;
+    },
+    error(roomId) {
+      return errorsByRoom[roomId]?.() ?? null;
+    },
+    async decryptMessage({ roomId, encryptedContent, roomSalt }) {
+      try {
+        const encrypted: EncryptedData = {
+          ciphertext: encryptedContent.ciphertext,
+          iv: encryptedContent.iv,
+          salt: roomSalt,
+        };
+        return await cryptoService.decrypt(roomId, encrypted);
+      } catch (e) {
+        console.error('Failed to decrypt message', e);
+        return null;
+      }
+    },
+  };
+
   return (
-    <MessagesStoreContext.Provider value={messagesStore}>
+    <MessagesStoreContext.Provider value={context}>
       {props.children}
     </MessagesStoreContext.Provider>
   );
@@ -172,3 +142,14 @@ function useMessagesStore() {
 }
 
 export { MessagesStoreProvider, useMessagesStore };
+
+function _mergeMessages(
+  prev: MessageData[],
+  incoming: MessageData[]
+): MessageData[] {
+  const map = new Map(prev.map((m) => [m.id, m]));
+  incoming.forEach((m) => map.set(m.id, m));
+  return [...map.values()].sort(
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+  );
+}
