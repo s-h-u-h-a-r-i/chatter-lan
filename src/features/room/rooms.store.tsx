@@ -54,7 +54,7 @@ const RoomsStoreProvider: ParentComponent = (props) => {
 
     if (!ip) {
       setLoading(false);
-      setError(userStore.error ?? 'Failed to load user context.');
+      setError(userStore.error() ?? 'Failed to load user context.');
       return;
     }
 
@@ -62,9 +62,9 @@ const RoomsStoreProvider: ParentComponent = (props) => {
       ROOMS_SUBSCRIPTION_KEY,
       roomRepo.subscribeToRooms(
         ip,
-        _onRoomUpsert(setRooms, setLoading),
-        _onRoomRemove(setRooms),
-        _onError(setError, setLoading)
+        _createRoomUpsert(setRooms, setLoading),
+        _createRoomRemove(setRooms),
+        _createError(setError, setLoading)
       )
     );
   });
@@ -97,7 +97,7 @@ function useRoomsStore() {
 
 export { RoomsStoreProvider, useRoomsStore };
 
-function _onRoomUpsert(
+function _createRoomUpsert(
   setRooms: Setter<RoomData[]>,
   setLoading: Setter<boolean>
 ) {
@@ -111,13 +111,13 @@ function _onRoomUpsert(
   };
 }
 
-function _onRoomRemove(setRooms: Setter<RoomData[]>) {
+function _createRoomRemove(setRooms: Setter<RoomData[]>) {
   return (roomIds: string[]) => {
     setRooms((prev) => prev.filter((r) => !roomIds.includes(r.id)));
   };
 }
 
-function _onError(
+function _createError(
   setError: Setter<string | null>,
   setLoading: Setter<boolean>
 ) {

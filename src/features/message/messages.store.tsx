@@ -15,17 +15,16 @@ import { useUserStore } from '../user';
 import * as messageRepo from './message.repository';
 import { EncryptedMessageContent, MessageData } from './message.types';
 
-type MessagesByRoom = Record<string, Accessor<MessageData[]>>;
-type LoadingByRoom = Record<string, Accessor<boolean>>;
-type ErrorsByRoom = Record<string, Accessor<string | null>>;
+type MessagesByRoomId = Record<string, Accessor<MessageData[]>>;
+type LoadingByRoomId = Record<string, Accessor<boolean>>;
+type ErrorsByRoomId = Record<string, Accessor<string | null>>;
 
 interface MessagesStoreContext {
   messages(roomId: string): MessageData[];
-  isLoading(roomId: string): boolean;
+  loading(roomId: string): boolean;
   error(roomId: string): string | null;
   decryptMessage(params: {
     roomId: string;
-    messageId: string;
     encryptedContent: EncryptedMessageContent;
     roomSalt: string;
   }): Promise<string | null>;
@@ -38,9 +37,9 @@ const MessagesStoreProvider: ParentComponent = (props) => {
   const roomsStore = useRoomsStore();
   const subscriptions = new FirestoreSubscriptionManager();
 
-  const messagesByRoom: MessagesByRoom = {};
-  const loadingByRoom: LoadingByRoom = {};
-  const errorsByRoom: ErrorsByRoom = {};
+  const messagesByRoom: MessagesByRoomId = {};
+  const loadingByRoom: LoadingByRoomId = {};
+  const errorsByRoom: ErrorsByRoomId = {};
 
   createEffect(() => {
     if (userStore.loading() || roomsStore.loading()) return;
@@ -103,7 +102,7 @@ const MessagesStoreProvider: ParentComponent = (props) => {
     messages(roomId) {
       return messagesByRoom[roomId]?.() ?? [];
     },
-    isLoading(roomId) {
+    loading(roomId) {
       return loadingByRoom[roomId]?.() ?? false;
     },
     error(roomId) {
