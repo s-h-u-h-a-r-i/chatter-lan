@@ -24,11 +24,11 @@ const AppContent: Component = () => {
   const pendingRoom = () => {
     const id = pendingRoomId();
     if (!id) return null;
-    return roomsStore.rooms.find((r) => r.id === id) ?? null;
+    return roomsStore.rooms().find((r) => r.id === id) ?? null;
   };
 
   createEffect(() => {
-    const selectedRoom = roomsStore.selectedRoom;
+    const selectedRoom = roomsStore.selectedRoom();
     if (selectedRoom && !pendingRoomId()) {
       cryptoService.hasKey(selectedRoom.id).then((isInitialized) => {
         if (!isInitialized) setPendingRoomId(selectedRoom.id);

@@ -40,7 +40,7 @@ export const InfoSidebar: Component<{ isOpen: boolean }> = (props) => {
 
   return (
     <SidebarLayout location="right" isOpen={props.isOpen} header={<Header />}>
-      <Show when={roomsStore.selectedRoom} fallback={<EmptyInfoState />}>
+      <Show when={roomsStore.selectedRoom()} fallback={<EmptyInfoState />}>
         {(room) => (
           <div class={styles.content}>
             <Section

@@ -38,7 +38,7 @@ export const RoomsListSidebar: Component<{ isOpen: boolean }> = (props) => {
   const roomsStore = useRoomsStore();
 
   const filteredRooms = createMemo(() => {
-    return roomsStore.rooms.filter((r) => {
+    return roomsStore.rooms().filter((r) => {
       return r.name.toLowerCase().includes(searchTerm());
     });
   });
@@ -54,7 +54,7 @@ export const RoomsListSidebar: Component<{ isOpen: boolean }> = (props) => {
             <button
               class={styles.roomItem}
               classList={{
-                [styles.active]: room.id === roomsStore.selectedRoom?.id,
+                [styles.active]: room.id === roomsStore.selectedRoom()?.id,
               }}
               onClick={() => roomsStore.setSelectedRoomId(room.id)}>
               <div class={styles.roomIcon}>
