@@ -19,7 +19,8 @@
   box-shadow: 0 8px 32px rgba(var(--color-text-primary-rgb), 0.2);
   max-width: 90vw;
   max-height: 90vh;
-  width: 100%;
+  width: fit-content;
+  min-width: 320px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
