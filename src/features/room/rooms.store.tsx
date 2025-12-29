@@ -22,6 +22,7 @@ interface RoomsStoreContext {
   error: Accessor<string | null>;
 
   setSelectedRoomId: Setter<string | null>;
+  createRoom(name: string): Promise<void>;
 }
 
 const ROOMS_SUBSCRIPTION_KEY = 'rooms' as const;
@@ -78,6 +79,18 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     error,
 
     setSelectedRoomId,
+    async createRoom(name) {
+      const ip = userStore.ip();
+      if (!ip) throw new Error('User IP is not available');
+
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const saltBase64 = btoa(String.fromCharCode(...salt));
+      await roomRepo.createRoom({
+        ip: ip,
+        name,
+        saltBase64,
+      });
+    },
   };
 
   return (

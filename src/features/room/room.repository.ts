@@ -15,16 +15,14 @@ import { RoomData } from './room.types';
 export async function createRoom(params: {
   ip: string;
   name: string;
-  salt: Uint8Array;
+  saltBase64: string;
 }): Promise<string> {
   const roomsRef = _getRoomsCollectionRef(params.ip);
-
-  const saltBase64 = btoa(String.fromCharCode(...params.salt));
 
   const docRef = await addDoc(roomsRef, {
     name: params.name,
     createdAt: serverTimestamp(),
-    salt: saltBase64,
+    salt: params.saltBase64,
   });
 
   return docRef.id;
