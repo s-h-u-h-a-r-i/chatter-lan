@@ -23,7 +23,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: var(--slide-in);
+  animation: var(--slide-up);
 }
 
 .header {
