@@ -53,6 +53,47 @@
   color: rgba(var(--color-text-primary-rgb), 0.4);
 }
 
+.createButtonContainer {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(var(--color-surface-rgb), 0.3);
+}
+
+.createButton {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-soft) 0%,
+    rgba(var(--color-accent-soft-rgb), 0.85) 100%
+  );
+  color: white;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(var(--color-accent-soft-rgb), 0.2);
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--color-accent-soft-rgb), 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.createButtonIcon {
+  flex-shrink: 0;
+}
+
 .roomList {
   flex: 1;
   overflow-y: auto;
