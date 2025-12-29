@@ -1,4 +1,10 @@
-import { Component, createEffect, createSignal, Show } from 'solid-js';
+import {
+  Component,
+  createEffect,
+  createMemo,
+  createSignal,
+  Show,
+} from 'solid-js';
 
 import { cryptoService } from '@/core/crypto';
 import { ChatArea, MessagesStoreProvider } from '@/features/message';
@@ -13,19 +19,22 @@ import { UserStoreProvider } from '@/features/user';
 import styles from './App.module.css';
 
 const AppContent: Component = () => {
+  const roomsStore = useRoomsStore();
+
   const [openSidebar, setOpenSidebar] = createSignal<'room' | 'info' | null>(
     null
   );
   const [pendingRoomId, setPendingRoomId] = createSignal<string | null>(null);
-  const roomsStore = useRoomsStore();
 
-  const roomsSidebarOpen = () => openSidebar() === 'room';
-  const infoSidebarOpen = () => openSidebar() === 'info';
-  const pendingRoom = () => {
+  const isInfoSidebarOpen = () => openSidebar() === 'info';
+  const isRoomsSidebarOpen = () => {
+    return openSidebar() === 'room' || roomsStore.selectedRoom() === null;
+  };
+  const pendingRoom = createMemo(() => {
     const id = pendingRoomId();
     if (!id) return null;
     return roomsStore.rooms().find((r) => r.id === id) ?? null;
-  };
+  });
 
   createEffect(() => {
     const selectedRoom = roomsStore.selectedRoom();
@@ -40,9 +49,9 @@ const AppContent: Component = () => {
 
   return (
     <div class={styles.app}>
-      <RoomsListSidebar isOpen={roomsSidebarOpen()} />
+      <RoomsListSidebar isOpen={isRoomsSidebarOpen()} />
       <ChatArea />
-      <InfoSidebar isOpen={infoSidebarOpen()} />
+      <InfoSidebar isOpen={isInfoSidebarOpen()} />
       <Show when={pendingRoom()}>
         {(room) => (
           <RoomPassphraseModal

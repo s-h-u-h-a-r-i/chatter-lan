@@ -73,7 +73,6 @@ export const CreateRoomModal: Component<{
             value={roomName()}
             onInput={(e) => setRoomName(e.currentTarget.value)}
             disabled={isSubmitting()}
-            autofocus
           />
         </div>
         <Show when={error()}>

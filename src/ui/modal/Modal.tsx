@@ -1,4 +1,11 @@
-import { Component, JSX, onCleanup, onMount, Show } from 'solid-js';
+import {
+  Component,
+  createEffect,
+  JSX,
+  onCleanup,
+  onMount,
+  Show,
+} from 'solid-js';
 
 import styles from './Modal.module.css';
 
@@ -10,6 +17,9 @@ export const Modal: Component<{
   closeOnOverlayClick?: boolean;
   closeOnEscape?: boolean;
 }> = (props) => {
+  let modalRef: HTMLDivElement | undefined;
+  let overlayRef: HTMLDivElement | undefined;
+
   const handleOverlayClick = (e: MouseEvent) => {
     if (props.closeOnOverlayClick === false || e.target !== e.currentTarget) {
       return;
@@ -32,16 +42,42 @@ export const Modal: Component<{
     document.removeEventListener('keydown', handleEscape);
   });
 
+  createEffect(() => {
+    if (!props.isOpen || !modalRef) return;
+    requestAnimationFrame(() => {
+      const autoFocusElement = modalRef.querySelector(
+        '[autofocus]'
+      ) as HTMLElement;
+
+      if (autoFocusElement) {
+        autoFocusElement.focus();
+        return;
+      }
+
+      const firstFocusable = modalRef.querySelector(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) as HTMLElement;
+
+      if (firstFocusable) {
+        firstFocusable.focus();
+        return;
+      }
+
+      modalRef.focus();
+    });
+  });
+
   return (
     <Show when={props.isOpen}>
       <div
+        ref={overlayRef}
         class={styles.overlay}
         onClick={handleOverlayClick}
-        aria-hidden="true"
         role="presentation"
         tabindex="-1"
         data-modal-overlay>
         <div
+          ref={modalRef}
           class={styles.modal}
           role="dialog"
           aria-modal="true"
