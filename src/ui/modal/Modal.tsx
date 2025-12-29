@@ -54,6 +54,15 @@ export const Modal: Component<{
         return;
       }
 
+      const firstInput = modalRef.querySelector(
+        'input:not([type="hidden"]), textarea, select'
+      ) as HTMLDivElement;
+
+      if (firstInput) {
+        firstInput.focus();
+        return;
+      }
+
       const firstFocusable = modalRef.querySelector(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       ) as HTMLElement;
