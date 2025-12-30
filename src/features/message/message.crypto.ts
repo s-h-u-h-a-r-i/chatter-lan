@@ -1,8 +1,9 @@
-import { cryptoService, EncryptedData } from '@/core/crypto';
+import { CryptoService, EncryptedData } from '@/core/crypto';
 import { EncryptedMessageContent } from './message.types';
 
 export async function decryptMessageContent(params: {
   roomId: string;
+  cryptoService: CryptoService;
   encryptedContent: EncryptedMessageContent;
   roomSalt: string;
 }): Promise<string | null> {
@@ -12,7 +13,7 @@ export async function decryptMessageContent(params: {
       iv: params.encryptedContent.iv,
       salt: params.roomSalt,
     };
-    return await cryptoService.decrypt(params.roomId, encrypted);
+    return await params.cryptoService.decrypt(params.roomId, encrypted);
   } catch (e) {
     console.error('Failed to decrypt message', e);
     return null;

@@ -8,8 +8,8 @@ import {
   useContext,
 } from 'solid-js';
 
+import { useCryptoService } from '@/core/crypto';
 import { FirestoreSubscriptionManager } from '@/core/firebase';
-import { cryptoService } from '../../core/crypto';
 import { useRoomsStore } from '../room';
 import { useUserStore } from '../user';
 import * as messageRepo from './message.repository';
@@ -30,6 +30,7 @@ const MessagesStoreContext = createContext<MessagesStoreContext>();
 const MessagesStoreProvider: ParentComponent = (props) => {
   const userStore = useUserStore();
   const roomsStore = useRoomsStore();
+  const cryptoService = useCryptoService();
   const subscriptions = new FirestoreSubscriptionManager();
 
   const messagesByRoom: MessagesByRoomId = {};

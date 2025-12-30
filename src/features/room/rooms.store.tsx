@@ -10,7 +10,7 @@ import {
   useContext,
 } from 'solid-js';
 
-import { cryptoService } from '@/core/crypto';
+import { useCryptoService } from '@/core/crypto';
 import { FirestoreSubscriptionManager } from '@/core/firebase';
 import { useUserStore } from '../user';
 import * as roomRepo from './room.repository';
@@ -32,6 +32,7 @@ const RoomsStoreContext = createContext<RoomsStoreContext>();
 
 const RoomsStoreProvider: ParentComponent = (props) => {
   const userStore = useUserStore();
+  const cryptoService = useCryptoService();
   const subscriptions = new FirestoreSubscriptionManager();
 
   const [rooms, setRooms] = createSignal<RoomData[]>([]);

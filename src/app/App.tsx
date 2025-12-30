@@ -6,7 +6,7 @@ import {
   Show,
 } from 'solid-js';
 
-import { cryptoService } from '@/core/crypto';
+import { CryptoServiceProvider, useCryptoService } from '@/core/crypto';
 import { ChatArea, MessagesStoreProvider } from '@/features/message';
 import {
   InfoSidebar,
@@ -20,6 +20,7 @@ import styles from './App.module.css';
 
 const AppContent: Component = () => {
   const roomsStore = useRoomsStore();
+  const cryptoService = useCryptoService();
 
   const [openSidebar, setOpenSidebar] = createSignal<'room' | 'info' | null>(
     null
@@ -75,13 +76,15 @@ const AppContent: Component = () => {
 
 const App: Component = () => {
   return (
-    <UserStoreProvider>
-      <RoomsStoreProvider>
-        <MessagesStoreProvider>
-          <AppContent />
-        </MessagesStoreProvider>
-      </RoomsStoreProvider>
-    </UserStoreProvider>
+    <CryptoServiceProvider>
+      <UserStoreProvider>
+        <RoomsStoreProvider>
+          <MessagesStoreProvider>
+            <AppContent />
+          </MessagesStoreProvider>
+        </RoomsStoreProvider>
+      </UserStoreProvider>
+    </CryptoServiceProvider>
   );
 };
 

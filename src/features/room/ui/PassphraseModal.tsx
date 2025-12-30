@@ -1,6 +1,6 @@
 import { Component, createSignal } from 'solid-js';
 
-import { cryptoService } from '@/core/crypto';
+import { useCryptoService } from '@/core/crypto';
 import { Modal } from '@/ui/modal';
 import styles from './PassphraseModal.module.css';
 
@@ -17,6 +17,8 @@ export const RoomPassphraseModal: Component<{
   onSuccess(): void;
   onCancel(): void;
 }> = (props) => {
+  const cryptoService = useCryptoService();
+
   const [passphrase, setPassphrase] = createSignal('');
   const [error, setError] = createSignal<string | null>(null);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
