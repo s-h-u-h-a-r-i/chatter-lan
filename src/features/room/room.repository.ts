@@ -1,10 +1,11 @@
 import {
-  addDoc,
   collection,
   CollectionReference,
+  doc,
   onSnapshot,
   QueryDocumentSnapshot,
   serverTimestamp,
+  setDoc,
   Timestamp,
   Unsubscribe,
 } from 'firebase/firestore';
@@ -13,19 +14,23 @@ import { firestore, fsPaths } from '@/core/firebase';
 import { RoomData } from './room.types';
 
 export async function createRoom(params: {
+  roomId: string;
   ip: string;
   name: string;
   saltBase64: string;
-}): Promise<string> {
+  verificationToken: string;
+  verificationIV: string;
+}): Promise<void> {
   const roomsRef = _getRoomsCollectionRef(params.ip);
+  const roomDocRef = doc(roomsRef, params.roomId);
 
-  const docRef = await addDoc(roomsRef, {
+  await setDoc(roomDocRef, {
     name: params.name,
     createdAt: serverTimestamp(),
     salt: params.saltBase64,
+    verificationToken: params.verificationToken,
+    verificationIV: params.verificationIV,
   });
-
-  return docRef.id;
 }
 
 export function subscribeToRooms(
@@ -93,10 +98,24 @@ function _toRoomData(docSnap: QueryDocumentSnapshot): RoomData {
     throw new Error(`Invalid or missing 'salt' in room '${docSnap.ref.path}'`);
   }
 
+  if (typeof data.verificationToken !== 'string') {
+    throw new Error(
+      `Invalid or missing 'verificationToken' in room '${docSnap.ref.path}'`
+    );
+  }
+
+  if (typeof data.verificationIV !== 'string') {
+    throw new Error(
+      `Invalid or missing 'verificationIV' in room '${docSnap.ref.path}'`
+    );
+  }
+
   return {
     id: docSnap.id,
     name: data.name,
     createdAt: data.createdAt.toDate(),
     salt: data.salt,
+    verificationIV: data.verificationIV,
+    verificationToken: data.verificationToken,
   };
 }

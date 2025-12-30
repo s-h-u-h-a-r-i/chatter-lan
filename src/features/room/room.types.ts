@@ -3,4 +3,6 @@ export interface RoomData {
   name: string;
   createdAt: Date;
   salt: string; // * base64-encoded
+  verificationToken: string; // * base64-encoded
+  verificationIV: string; // * base64-encoded
 }

@@ -10,6 +10,7 @@ import {
   useContext,
 } from 'solid-js';
 
+import { cryptoService } from '@/core/crypto';
 import { FirestoreSubscriptionManager } from '@/core/firebase';
 import { useUserStore } from '../user';
 import * as roomRepo from './room.repository';
@@ -22,7 +23,7 @@ interface RoomsStoreContext {
   error: Accessor<string | null>;
 
   setSelectedRoomId: Setter<string | null>;
-  createRoom(name: string): Promise<void>;
+  createRoom(name: string, passphrase: string): Promise<void>;
 }
 
 const ROOMS_SUBSCRIPTION_KEY = 'rooms' as const;
@@ -79,16 +80,25 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     error,
 
     setSelectedRoomId,
-    async createRoom(name) {
+    async createRoom(name, passphrase) {
       const ip = userStore.ip();
       if (!ip) throw new Error('User IP is not available');
 
+      const roomId = crypto.randomUUID();
       const salt = crypto.getRandomValues(new Uint8Array(16));
       const saltBase64 = btoa(String.fromCharCode(...salt));
+
+      await cryptoService.init(roomId, passphrase, salt);
+      const verificationToken = 'ROOM_VERIFICAITON';
+      const encrypted = await cryptoService.encrypt(roomId, verificationToken);
+
       await roomRepo.createRoom({
-        ip: ip,
+        roomId,
+        ip,
         name,
         saltBase64,
+        verificationToken: encrypted.ciphertext,
+        verificationIV: encrypted.iv,
       });
     },
   };

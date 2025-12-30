@@ -16,6 +16,7 @@ export const CreateRoomModal: Component<{
   const roomsStore = useRoomsStore();
 
   const [roomName, setRoomName] = createSignal('');
+  const [passphrase, setPassphrase] = createSignal('');
   const [error, setError] = createSignal<string | null>(null);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
@@ -25,15 +26,24 @@ export const CreateRoomModal: Component<{
     setIsSubmitting(true);
 
     const name = roomName().trim();
+    const pp = passphrase();
+
     if (!name) {
       setError('Room name is required');
       setIsSubmitting(false);
       return;
     }
 
+    if (!pp) {
+      setError('Passphrase is required');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      await roomsStore.createRoom(name);
+      await roomsStore.createRoom(name, pp);
       setRoomName('');
+      setPassphrase('');
       props.onClose();
     } catch (err) {
       setError(
@@ -48,6 +58,7 @@ export const CreateRoomModal: Component<{
 
   const handleClose = () => {
     setRoomName('');
+    setPassphrase('');
     setError(null);
     props.onClose();
   };
@@ -72,6 +83,21 @@ export const CreateRoomModal: Component<{
             class={styles.input}
             value={roomName()}
             onInput={(e) => setRoomName(e.currentTarget.value)}
+            disabled={isSubmitting()}
+          />
+        </div>
+        <div class={styles.formGroup}>
+          <label for="passphrase" class={styles.label}>
+            Passphrase
+          </label>
+          <input
+            type="password"
+            name="passphrase"
+            id="passphrase"
+            placeholder="Enter passphrase..."
+            class={styles.input}
+            value={passphrase()}
+            onInput={(e) => setPassphrase(e.currentTarget.value)}
             disabled={isSubmitting()}
           />
         </div>
