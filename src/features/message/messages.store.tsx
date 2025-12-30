@@ -91,7 +91,6 @@ const MessagesStoreProvider: ParentComponent = (props) => {
 
   onCleanup(() => {
     subscriptions.clear();
-    cryptoService.destroy();
   });
 
   const context: MessagesStoreContext = {
