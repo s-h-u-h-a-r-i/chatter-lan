@@ -90,7 +90,7 @@ const RoomsStoreProvider: ParentComponent = (props) => {
       const saltBase64 = btoa(String.fromCharCode(...salt));
 
       await cryptoService.init(roomId, passphrase, salt);
-      const verificationToken = 'ROOM_VERIFICAITON';
+      const verificationToken = 'ROOM_VERIFICATION';
       const encrypted = await cryptoService.encrypt(roomId, verificationToken);
 
       await roomRepo.createRoom({

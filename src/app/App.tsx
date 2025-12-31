@@ -57,9 +57,7 @@ const AppContent: Component = () => {
         {(room) => (
           <RoomPassphraseModal
             isOpen={true}
-            roomId={room().id}
-            roomName={room().name}
-            roomSalt={room().salt}
+            room={room()}
             onSuccess={() => {
               setPendingRoomId(null);
             }}
