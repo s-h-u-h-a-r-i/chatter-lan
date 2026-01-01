@@ -1,6 +1,7 @@
 import { Component, createSignal, Show } from 'solid-js';
 
 import { useCryptoService } from '@/core/crypto';
+import { TextInput } from '@/ui/inputs';
 import { Modal } from '@/ui/modal';
 import { RoomData } from '../room.types';
 import styles from './PassphraseModal.module.css';
@@ -72,16 +73,15 @@ export const RoomPassphraseModal: Component<{
           <label for="passphrase" class={styles.label}>
             Passphrase
           </label>
-          <input
+          <TextInput
             ref={passphraseInputRef}
-            type="password"
-            name="passphrase"
             id="passphrase"
-            placeholder="Enter passphrase"
-            class={styles.input}
+            name="passphrase"
+            placeholder="Enter passphrase..."
             value={passphrase()}
-            onInput={(e) => setPassphrase(e.currentTarget.value)}
+            onInput={setPassphrase}
             disabled={isSubmitting()}
+            hideText
           />
         </div>
         <Show when={error()}>

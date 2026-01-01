@@ -11,6 +11,7 @@ export const TextInput: Component<{
   hasError?: boolean;
   hideText?: boolean;
   class?: string;
+  ref?: HTMLInputElement | ((el: HTMLInputElement) => void);
   onInput?(value: string): void;
   onBlur?(value: string): void;
 }> = (props) => {
@@ -19,6 +20,7 @@ export const TextInput: Component<{
 
   return (
     <input
+      ref={props.ref}
       id={props.id}
       type={props.hideText ? 'password' : 'text'}
       name={props.name}

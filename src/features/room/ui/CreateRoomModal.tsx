@@ -81,7 +81,7 @@ export const CreateRoomModal: Component<{
             name="room-name"
             placeholder="Enter room name..."
             value={roomName()}
-            onInput={(value) => setRoomName(value)}
+            onInput={setRoomName}
             disabled={isSubmitting()}
           />
         </div>
@@ -95,7 +95,7 @@ export const CreateRoomModal: Component<{
             placeholder="Enter passphrase..."
             value={passphrase()}
             disabled={isSubmitting()}
-            onInput={(value) => setPassphrase(value)}
+            onInput={setPassphrase}
             hideText
           />
         </div>
