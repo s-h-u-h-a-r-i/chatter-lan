@@ -1,38 +1,27 @@
 import { Component, createMemo, createSignal, For } from 'solid-js';
 
-import { BookUser, Hash, Plus, Search } from '@/ui/icons';
+import { BookUser, Hash, Plus } from '@/ui/icons';
+import { SearchInput } from '@/ui/inputs';
 import { SidebarLayout } from '@/ui/layouts';
-import { debounce } from '@solid-primitives/scheduled';
 import { useRoomsStore } from '../rooms.store';
 import { CreateRoomModal } from './CreateRoomModal';
 import styles from './RoomListSidebar.module.css';
 
 const Header: Component<{ setSearchTerm(searchTerm: string): void }> = (
   props
-) => {
-  const debouncedSearch = debounce((value: string) => {
-    props.setSearchTerm(value.trim().toLowerCase());
-  }, 250);
-
-  return (
-    <>
-      <div class={styles.header}>
-        <BookUser class={styles.logo} size={28} strokeWidth={2} />
-        <h2>Rooms</h2>
-      </div>
-      <div class={styles.searchContainer}>
-        <Search class={styles.searchIcon} size={16} />
-        <input
-          type="text"
-          name="room-search"
-          placeholder="Search rooms..."
-          class={styles.searchInput}
-          onInput={(e) => debouncedSearch(e.currentTarget.value)}
-        />
-      </div>
-    </>
-  );
-};
+) => (
+  <>
+    <div class={styles.header}>
+      <BookUser class={styles.logo} size={28} strokeWidth={2} />
+      <h2>Rooms</h2>
+    </div>
+    <SearchInput
+      name="room-search"
+      placeholder="Search rooms..."
+      onSearch={(value) => props.setSearchTerm(value.toLowerCase())}
+    />
+  </>
+);
 
 export const RoomsListSidebar: Component<{ isOpen: boolean }> = (props) => {
   const roomsStore = useRoomsStore();
