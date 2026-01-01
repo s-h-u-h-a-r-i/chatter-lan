@@ -27,7 +27,8 @@ const AppContent: Component = () => {
   );
   const [pendingRoomId, setPendingRoomId] = createSignal<string | null>(null);
 
-  const isInfoSidebarOpen = () => openSidebar() === 'info';
+  const isInfoSidebarOpen = () =>
+    openSidebar() === 'info' && roomsStore.selectedRoom() !== null;
   const isRoomsSidebarOpen = () => {
     return openSidebar() === 'room' || roomsStore.selectedRoom() === null;
   };
