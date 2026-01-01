@@ -13,4 +13,7 @@
 
   --color-text-primary: #2c2416;
   --color-text-primary-rgb: 44, 36, 22;
+
+  --color-error: #dc2626;
+  --color-error-rgb: 220, 38, 38;
 }

@@ -1,5 +1,6 @@
 import { Component, createSignal, Show } from 'solid-js';
 
+import { TextInput } from '@/ui/inputs';
 import { Modal } from '@/ui/modal';
 import { useRoomsStore } from '../rooms.store';
 import styles from './CreateRoomModal.module.css';
@@ -75,14 +76,12 @@ export const CreateRoomModal: Component<{
           <label for="room-name" class={styles.label}>
             Room Name
           </label>
-          <input
+          <TextInput
             id="room-name"
-            type="text"
             name="room-name"
             placeholder="Enter room name..."
-            class={styles.input}
             value={roomName()}
-            onInput={(e) => setRoomName(e.currentTarget.value)}
+            onInput={(value) => setRoomName(value)}
             disabled={isSubmitting()}
           />
         </div>
@@ -90,15 +89,14 @@ export const CreateRoomModal: Component<{
           <label for="passphrase" class={styles.label}>
             Passphrase
           </label>
-          <input
-            type="password"
-            name="passphrase"
+          <TextInput
             id="passphrase"
+            name="passphrase"
             placeholder="Enter passphrase..."
-            class={styles.input}
             value={passphrase()}
-            onInput={(e) => setPassphrase(e.currentTarget.value)}
             disabled={isSubmitting()}
+            onInput={(value) => setPassphrase(value)}
+            hideText
           />
         </div>
         <Show when={error()}>
