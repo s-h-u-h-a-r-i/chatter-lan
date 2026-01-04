@@ -15,12 +15,17 @@ import {
   RoomsStoreProvider,
   useRoomsStore,
 } from '@/features/room';
-import { UserStoreProvider } from '@/features/user';
+import {
+  UserNameModal,
+  UserStoreProvider,
+  useUserStore,
+} from '@/features/user';
 import styles from './App.module.css';
 
 const AppContent: Component = () => {
   const roomsStore = useRoomsStore();
   const cryptoService = useCryptoService();
+  const userStore = useUserStore();
 
   const [openSidebar, setOpenSidebar] = createSignal<'rooms' | 'info' | null>(
     null
@@ -74,6 +79,7 @@ const AppContent: Component = () => {
         onToggleInfoSidebar={handleToggleInfoSidebar}
       />
       <InfoSidebar isOpen={isInfoSidebarOpen()} />
+
       <Show when={pendingRoom()}>
         {(room) => (
           <RoomPassphraseModal
@@ -89,6 +95,12 @@ const AppContent: Component = () => {
           />
         )}
       </Show>
+
+      <UserNameModal
+        isOpen={!userStore.name()}
+        currentName={userStore.name()}
+        onSubmit={userStore.setName}
+      />
     </div>
   );
 };
