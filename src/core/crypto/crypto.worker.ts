@@ -146,10 +146,21 @@ async function _handleDecrypt(message: WorkerDecryptMessage): Promise<void> {
       data: plainText,
     } satisfies WorkerResponse);
   } catch (error) {
+    let errorMessage = 'Decryption failed';
+
+    if (error instanceof Error && error.message) {
+      errorMessage = error.message;
+    }
+
+    if (error instanceof DOMException && error.name === 'OperationError') {
+      errorMessage =
+        'Decryption failed. The passphrase may be incorrect or the data may be corrupted.';
+    }
+
     self.postMessage({
       type: 'decrypt-error',
       id: message.id,
-      error: error instanceof Error ? error.message : 'Decryption failed',
+      error: errorMessage,
     } satisfies WorkerResponse);
   }
 }
