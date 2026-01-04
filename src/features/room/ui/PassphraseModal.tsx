@@ -45,7 +45,7 @@ export const RoomPassphraseModal: Component<{
       props.onSuccess();
     } catch (error) {
       await cryptoService.removeKey(props.room.id).catch(() => {});
-      console.log(error);
+      console.warn(error);
       setError('Failed to join room. Please check your passphrase.');
       queueMicrotask(() => {
         passphraseInputRef?.focus();

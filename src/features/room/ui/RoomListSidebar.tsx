@@ -23,7 +23,10 @@ const Header: Component<{ setSearchTerm(searchTerm: string): void }> = (
   </>
 );
 
-export const RoomsListSidebar: Component<{ isOpen: boolean }> = (props) => {
+export const RoomsListSidebar: Component<{
+  isOpen: boolean;
+  onCloseSidebar(): void;
+}> = (props) => {
   const roomsStore = useRoomsStore();
 
   const [searchTerm, setSearchTerm] = createSignal('');
@@ -57,7 +60,10 @@ export const RoomsListSidebar: Component<{ isOpen: boolean }> = (props) => {
                 classList={{
                   [styles.active]: room.id === roomsStore.selectedRoom()?.id,
                 }}
-                onClick={() => roomsStore.setSelectedRoomId(room.id)}>
+                onClick={() => {
+                  roomsStore.setSelectedRoomId(room.id);
+                  props.onCloseSidebar();
+                }}>
                 <div class={styles.roomIcon}>
                   <Hash size={18} strokeWidth={2.5} />
                 </div>

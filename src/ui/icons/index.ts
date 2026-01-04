@@ -2,5 +2,7 @@ export { default as BookUser } from 'lucide-solid/icons/book-user';
 export { default as Calendar } from 'lucide-solid/icons/calendar';
 export { default as Hash } from 'lucide-solid/icons/hash';
 export { default as Info } from 'lucide-solid/icons/info';
+export { default as Menu } from 'lucide-solid/icons/menu';
+export { default as MessageCircle } from 'lucide-solid/icons/message-circle';
 export { default as Plus } from 'lucide-solid/icons/plus';
 export { default as Search } from 'lucide-solid/icons/search';

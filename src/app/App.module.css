@@ -5,3 +5,22 @@
   overflow: hidden;
   position: relative;
 }
+
+.overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: rgba(var(--color-text-primary-rgb), 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 998;
+    animation: var(--fade-in);
+  }
+}

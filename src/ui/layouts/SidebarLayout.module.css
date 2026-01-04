@@ -1,11 +1,7 @@
 .sidebar {
   width: 280px;
   height: 100%;
-  background: linear-gradient(
-    135deg,
-    var(--color-bg-secondary) 0%,
-    rgba(var(--color-surface-rgb), 0.3) 100%
-  );
+  background: var(--color-bg-secondary);
   backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;

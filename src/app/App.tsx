@@ -22,7 +22,7 @@ const AppContent: Component = () => {
   const roomsStore = useRoomsStore();
   const cryptoService = useCryptoService();
 
-  const [openSidebar, setOpenSidebar] = createSignal<'room' | 'info' | null>(
+  const [openSidebar, setOpenSidebar] = createSignal<'rooms' | 'info' | null>(
     null
   );
   const [pendingRoomId, setPendingRoomId] = createSignal<string | null>(null);
@@ -30,13 +30,23 @@ const AppContent: Component = () => {
   const isInfoSidebarOpen = () =>
     openSidebar() === 'info' && roomsStore.selectedRoom() !== null;
   const isRoomsSidebarOpen = () => {
-    return openSidebar() === 'room' || roomsStore.selectedRoom() === null;
+    return openSidebar() === 'rooms' || roomsStore.selectedRoom() === null;
   };
   const pendingRoom = createMemo(() => {
     const id = pendingRoomId();
     if (!id) return null;
     return roomsStore.rooms().find((r) => r.id === id) ?? null;
   });
+
+  const handleToggleRoomsSidebar = () => {
+    const isRoomsSidebarOpen = openSidebar() === 'rooms';
+    isRoomsSidebarOpen ? setOpenSidebar(null) : setOpenSidebar('rooms');
+  };
+
+  const handleToggleInfoSidebar = () => {
+    const isInfoSidebarOpen = openSidebar() === 'info';
+    isInfoSidebarOpen ? setOpenSidebar(null) : setOpenSidebar('info');
+  };
 
   createEffect(() => {
     const selectedRoom = roomsStore.selectedRoom();
@@ -51,8 +61,18 @@ const AppContent: Component = () => {
 
   return (
     <div class={styles.app}>
-      <RoomsListSidebar isOpen={isRoomsSidebarOpen()} />
-      <ChatArea />
+      <Show when={isRoomsSidebarOpen() || isInfoSidebarOpen()}>
+        <div class={styles.overlay} onclick={() => setOpenSidebar(null)} />
+      </Show>
+
+      <RoomsListSidebar
+        isOpen={isRoomsSidebarOpen()}
+        onCloseSidebar={() => setOpenSidebar(null)}
+      />
+      <ChatArea
+        onToggleRoomsSidebar={handleToggleRoomsSidebar}
+        onToggleInfoSidebar={handleToggleInfoSidebar}
+      />
       <InfoSidebar isOpen={isInfoSidebarOpen()} />
       <Show when={pendingRoom()}>
         {(room) => (
