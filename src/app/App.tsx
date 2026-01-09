@@ -15,11 +15,7 @@ import {
   RoomsStoreProvider,
   useRoomsStore,
 } from '@/features/room';
-import {
-  UserNameModal,
-  UserStoreProvider,
-  useUserStore,
-} from '@/features/user';
+import { UserStoreProvider, useUserStore } from '@/features/user';
 import styles from './App.module.css';
 
 const AppContent: Component = () => {
@@ -95,12 +91,6 @@ const AppContent: Component = () => {
           />
         )}
       </Show>
-
-      <UserNameModal
-        isOpen={!userStore.name()}
-        currentName={userStore.name()}
-        onSubmit={userStore.setName}
-      />
     </div>
   );
 };

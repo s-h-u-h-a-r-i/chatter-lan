@@ -10,6 +10,7 @@ import {
 } from 'solid-js';
 
 import { auth } from '@/core/firebase';
+import { UserNameModal } from './ui';
 import { fetchPublicIp } from './user.service';
 
 interface UserStoreContext {
@@ -76,6 +77,7 @@ const UserStoreProvider: ParentComponent = (props) => {
   return (
     <UserStoreContext.Provider value={context}>
       {props.children}
+      <UserNameModal isOpen={!name()} currentName={name()} onSubmit={setName} />
     </UserStoreContext.Provider>
   );
 };
