@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+
+- Only use colors from [\_colors.css](/src/styles/_colors.css)
+- If you want to use colors that do not exist in `_colors.css` then they should be added to `_colors.css`
