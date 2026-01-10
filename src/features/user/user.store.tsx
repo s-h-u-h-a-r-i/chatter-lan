@@ -3,16 +3,16 @@ import {
   Accessor,
   createContext,
   createEffect,
+  createMemo,
+  createResource,
   createSignal,
   Match,
-  onMount,
   ParentComponent,
   Switch,
   useContext,
 } from 'solid-js';
 
 import { auth } from '@/core/firebase';
-import { required } from '@/core/utils/signal.utils';
 import { UserNameModal } from './ui';
 import { fetchPublicIp } from './user.service';
 
@@ -20,8 +20,6 @@ interface UserStoreContext {
   ip: Accessor<string>;
   uid: Accessor<string>;
   name: Accessor<string>;
-  loading: Accessor<boolean>;
-  error: Accessor<string | null>;
 
   setName(name: string): void;
 }
@@ -31,33 +29,20 @@ const USERNAME_STORAGE_KEY = 'chatter-lan-username';
 const UserStoreContext = createContext<UserStoreContext>();
 
 const UserStoreProvider: ParentComponent = (props) => {
-  const [ip, setIp] = createSignal<string | undefined>();
-  const [uid, setUid] = createSignal<string | undefined>();
-  const [name, setName] = createSignal<string | undefined>();
-  const [loading, setLoading] = createSignal(true);
-  const [error, setError] = createSignal<string | null>(null);
+  const [name, setName] = createSignal(
+    localStorage.getItem(USERNAME_STORAGE_KEY)
+  );
 
-  onMount(async () => {
-    const storedName = localStorage.getItem(USERNAME_STORAGE_KEY);
-    if (storedName) {
-      setName(storedName);
-    }
+  const [authData] = createResource(async () => {
+    const [userCredential, publicIp] = await Promise.all([
+      signInAnonymously(auth),
+      fetchPublicIp(),
+    ]);
 
-    try {
-      const [userCredential, publicIp] = await Promise.all([
-        signInAnonymously(auth),
-        fetchPublicIp(),
-      ]);
-
-      setUid(userCredential.user.uid);
-      setIp(publicIp);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to sign in or fetch IP'
-      );
-    } finally {
-      setLoading(false);
-    }
+    return {
+      uid: userCredential.user.uid,
+      ip: publicIp,
+    };
   });
 
   createEffect(() => {
@@ -67,31 +52,29 @@ const UserStoreProvider: ParentComponent = (props) => {
     }
   });
 
-  const context: UserStoreContext = {
-    ip: required(ip, 'IP'),
-    uid: required(uid, 'UID'),
-    name: required(name, 'Name'),
-    loading,
-    error,
-
-    setName,
-  };
-
-  const ready = () => !loading() && !error() && ip() && uid() && name();
+  const ready = createMemo(() => {
+    const a = authData();
+    const n = name();
+    return a && n ? { authData: a, name: n } : null;
+  });
 
   return (
-    <UserStoreContext.Provider value={context}>
-      <Switch>
-        <Match when={!name()}>
-          <UserNameModal
-            isOpen={true}
-            currentName={name() ?? null}
-            onSubmit={setName}
-          />
-        </Match>
-        <Match when={ready()}>{props.children}</Match>
-      </Switch>
-    </UserStoreContext.Provider>
+    <Switch>
+      <Match when={!name()}>
+        <UserNameModal isOpen={true} currentName={null} onSubmit={setName} />
+      </Match>
+
+      <Match when={ready()}>
+        {(data) => (
+          <_UserStoreProviderInner
+            {...data().authData}
+            name={data().name}
+            setName={setName}>
+            {props.children}
+          </_UserStoreProviderInner>
+        )}
+      </Match>
+    </Switch>
   );
 };
 
@@ -104,3 +87,23 @@ function useUserStore() {
 }
 
 export { UserStoreProvider, useUserStore };
+
+const _UserStoreProviderInner: ParentComponent<{
+  name: string;
+  ip: string;
+  uid: string;
+  setName(name: string): void;
+}> = (props) => {
+  const context: UserStoreContext = {
+    name: () => props.name,
+    ip: () => props.ip,
+    uid: () => props.uid,
+    setName: props.setName,
+  };
+
+  return (
+    <UserStoreContext.Provider value={context}>
+      {props.children}
+    </UserStoreContext.Provider>
+  );
+};

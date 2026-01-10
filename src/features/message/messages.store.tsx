@@ -36,7 +36,7 @@ const MessagesStoreProvider: ParentComponent = (props) => {
   const errorsByRoom: ErrorsByRoomId = {};
 
   createEffect(() => {
-    if (userStore.loading() || roomsStore.loading()) return;
+    if (roomsStore.loading()) return;
     const ip = userStore.ip();
 
     const currentRoomIds = new Set(roomsStore.rooms().map((r) => r.id));

@@ -53,8 +53,6 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     setLoading(true);
     setError(null);
 
-    if (userStore.loading()) return;
-
     subscriptions.subscribe(
       ROOMS_SUBSCRIPTION_KEY,
       roomRepo.subscribeToRooms(
