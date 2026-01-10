@@ -24,3 +24,91 @@
     animation: var(--fade-in);
   }
 }
+
+.fallback {
+  display: flex;
+  align-items: safe center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  overflow-y: auto;
+}
+
+.fallbackContent {
+  text-align: center;
+  max-width: 500px;
+  padding: 2rem;
+}
+
+.errorIcon {
+  color: #f5ae2c;
+}
+
+.errorTitle {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: var(--color-text-primary);
+}
+
+.errorMessage {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 2rem 0;
+  color: rgba(var(--color-text-primary-rgb), 0.7);
+}
+
+.refreshButton {
+  padding: 0.875rem 2rem;
+  background-color: var(--color-accent-soft);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.errorDetails {
+  margin-top: 2rem;
+  text-align: left;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.errorDetails summary {
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  user-select: none;
+
+  &:hover {
+    color: white;
+  }
+}
+
+.errorDetails pre {
+  background: rgbna(0, 0, 0, 0.4);
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #ffffff;
+  margin: 0.5rem 0 0 0;
+  font-family: 'Courier New', monospace;
+}

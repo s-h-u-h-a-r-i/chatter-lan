@@ -6,3 +6,4 @@ export { default as Menu } from 'lucide-solid/icons/menu';
 export { default as MessageCircle } from 'lucide-solid/icons/message-circle';
 export { default as Plus } from 'lucide-solid/icons/plus';
 export { default as Search } from 'lucide-solid/icons/search';
+export { default as TriangleAlert } from 'lucide-solid/icons/triangle-alert';
