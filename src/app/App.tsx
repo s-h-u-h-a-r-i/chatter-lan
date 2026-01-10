@@ -5,6 +5,7 @@ import {
   createSignal,
   ErrorBoundary,
   Show,
+  Suspense,
 } from 'solid-js';
 
 import { CryptoServiceProvider, useCryptoService } from '@/core/crypto';
@@ -22,60 +23,21 @@ import styles from './App.module.css';
 
 const App: Component = () => (
   <ErrorBoundary fallback={(err) => <_AppErrorFallback error={err} />}>
-    <CryptoServiceProvider>
-      <UserStoreProvider>
-        <RoomsStoreProvider>
-          <MessagesStoreProvider>
-            <_AppContent />
-          </MessagesStoreProvider>
-        </RoomsStoreProvider>
-      </UserStoreProvider>
-    </CryptoServiceProvider>
+    <Suspense fallback={<_AppLoadingFallback />}>
+      <CryptoServiceProvider>
+        <UserStoreProvider>
+          <RoomsStoreProvider>
+            <MessagesStoreProvider>
+              <_AppContent />
+            </MessagesStoreProvider>
+          </RoomsStoreProvider>
+        </UserStoreProvider>
+      </CryptoServiceProvider>
+    </Suspense>
   </ErrorBoundary>
 );
 
 export default App;
-
-const _AppErrorFallback: Component<{ error: unknown }> = (props) => {
-  const errorString = createMemo(() =>
-    props.error instanceof Error ? props.error.toString() : String(props.error)
-  );
-  const errorStack = createMemo(() =>
-    props.error instanceof Error ? props.error.stack : undefined
-  );
-
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
-  return (
-    <div class={styles.fallback}>
-      <div class={styles.fallbackContent}>
-        <div class={styles.errorIcon}>
-          <TriangleAlert />
-        </div>
-        <h1 class={styles.errorTitle}>Something went wrong</h1>
-        <p class={styles.errorMessage}>
-          We're sorry, but something unexpected happened
-          <br />
-          Please try refreshing the page.
-        </p>
-        <button onClick={handleRefresh} class={styles.refreshButton}>
-          Refresh Page
-        </button>
-        <Show when={import.meta.env.DEV}>
-          <details class={styles.errorDetails}>
-            <summary>Error Details (Dev Only)</summary>
-            <pre>{errorString()}</pre>
-            <Show when={errorStack()}>
-              <pre>{errorStack()}</pre>
-            </Show>
-          </details>
-        </Show>
-      </div>
-    </div>
-  );
-};
 
 const _AppContent: Component = () => {
   const roomsStore = useRoomsStore();
@@ -152,3 +114,56 @@ const _AppContent: Component = () => {
     </div>
   );
 };
+
+const _AppErrorFallback: Component<{ error: unknown }> = (props) => {
+  const errorString = createMemo(() =>
+    props.error instanceof Error ? props.error.toString() : String(props.error)
+  );
+  const errorStack = createMemo(() =>
+    props.error instanceof Error ? props.error.stack : undefined
+  );
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  return (
+    <div class={styles.fallback}>
+      <div class={styles.fallbackContent}>
+        <div class={styles.errorIcon}>
+          <TriangleAlert />
+        </div>
+        <h1 class={styles.errorTitle}>Something went wrong</h1>
+        <p class={styles.errorMessage}>
+          We're sorry, but something unexpected happened
+          <br />
+          Please try refreshing the page.
+        </p>
+        <button onClick={handleRefresh} class={styles.refreshButton}>
+          Refresh Page
+        </button>
+        <Show when={import.meta.env.DEV}>
+          <details class={styles.errorDetails}>
+            <summary>Error Details (Dev Only)</summary>
+            <pre>{errorString()}</pre>
+            <Show when={errorStack()}>
+              <pre>{errorStack()}</pre>
+            </Show>
+          </details>
+        </Show>
+      </div>
+    </div>
+  );
+};
+
+const _AppLoadingFallback: Component = () => (
+  <div class={styles.fallback}>
+    <div class={styles.fallbackContent}>
+      <div class={styles.loadingSpinner}>
+        <div class={styles.spinner} />
+      </div>
+      <h1 class={styles.loadingTitle}>Loading...</h1>
+      <p class={styles.loadingMessage}>Please wait while we set things up</p>
+    </div>
+  </div>
+);

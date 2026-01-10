@@ -1,6 +1,7 @@
 :root {
   --fade-in: fadeIn 200ms ease-out;
   --slide-up: slideUp 200ms ease-out;
+  --spin: spin 0.8s linear infinite;
 }
 
 @keyframes fadeIn {
@@ -20,5 +21,11 @@
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
