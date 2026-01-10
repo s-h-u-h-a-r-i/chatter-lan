@@ -8,7 +8,6 @@ import {
   useContext,
 } from 'solid-js';
 
-import { useCryptoService } from '@/core/crypto';
 import { FirestoreSubscriptionManager } from '@/core/firebase';
 import { useRoomsStore } from '../room';
 import { useUserStore } from '../user';
@@ -30,7 +29,6 @@ const MessagesStoreContext = createContext<MessagesStoreContext>();
 const MessagesStoreProvider: ParentComponent = (props) => {
   const userStore = useUserStore();
   const roomsStore = useRoomsStore();
-  const cryptoService = useCryptoService();
   const subscriptions = new FirestoreSubscriptionManager();
 
   const messagesByRoom: MessagesByRoomId = {};
@@ -40,7 +38,6 @@ const MessagesStoreProvider: ParentComponent = (props) => {
   createEffect(() => {
     if (userStore.loading() || roomsStore.loading()) return;
     const ip = userStore.ip();
-    if (!ip) return;
 
     const currentRoomIds = new Set(roomsStore.rooms().map((r) => r.id));
     const subscribedRoomIds = new Set(subscriptions.keys);

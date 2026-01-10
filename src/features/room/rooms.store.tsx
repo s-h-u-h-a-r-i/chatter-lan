@@ -55,12 +55,6 @@ const RoomsStoreProvider: ParentComponent = (props) => {
 
     if (userStore.loading()) return;
 
-    if (!ip) {
-      setLoading(false);
-      setError(userStore.error() ?? 'Failed to load user context.');
-      return;
-    }
-
     subscriptions.subscribe(
       ROOMS_SUBSCRIPTION_KEY,
       roomRepo.subscribeToRooms(
@@ -83,7 +77,6 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     setSelectedRoomId,
     async createRoom(name, passphrase) {
       const ip = userStore.ip();
-      if (!ip) throw new Error('User IP is not available');
 
       const roomId = crypto.randomUUID();
       const salt = crypto.getRandomValues(new Uint8Array(16));

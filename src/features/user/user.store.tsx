@@ -4,19 +4,22 @@ import {
   createContext,
   createEffect,
   createSignal,
+  Match,
   onMount,
   ParentComponent,
+  Switch,
   useContext,
 } from 'solid-js';
 
 import { auth } from '@/core/firebase';
+import { required } from '@/core/utils/signal.utils';
 import { UserNameModal } from './ui';
 import { fetchPublicIp } from './user.service';
 
 interface UserStoreContext {
-  ip: Accessor<string | null>;
-  uid: Accessor<string | null>;
-  name: Accessor<string | null>;
+  ip: Accessor<string>;
+  uid: Accessor<string>;
+  name: Accessor<string>;
   loading: Accessor<boolean>;
   error: Accessor<string | null>;
 
@@ -28,9 +31,9 @@ const USERNAME_STORAGE_KEY = 'chatter-lan-username';
 const UserStoreContext = createContext<UserStoreContext>();
 
 const UserStoreProvider: ParentComponent = (props) => {
-  const [ip, setIp] = createSignal<string | null>(null);
-  const [uid, setUid] = createSignal<string | null>(null);
-  const [name, setName] = createSignal<string | null>(null);
+  const [ip, setIp] = createSignal<string | undefined>();
+  const [uid, setUid] = createSignal<string | undefined>();
+  const [name, setName] = createSignal<string | undefined>();
   const [loading, setLoading] = createSignal(true);
   const [error, setError] = createSignal<string | null>(null);
 
@@ -65,19 +68,29 @@ const UserStoreProvider: ParentComponent = (props) => {
   });
 
   const context: UserStoreContext = {
-    ip,
-    uid,
-    name,
+    ip: required(ip, 'IP'),
+    uid: required(uid, 'UID'),
+    name: required(name, 'Name'),
     loading,
     error,
 
     setName,
   };
 
+  const ready = () => !loading() && !error() && ip() && uid() && name();
+
   return (
     <UserStoreContext.Provider value={context}>
-      {props.children}
-      <UserNameModal isOpen={!name()} currentName={name()} onSubmit={setName} />
+      <Switch>
+        <Match when={!name()}>
+          <UserNameModal
+            isOpen={true}
+            currentName={name() ?? null}
+            onSubmit={setName}
+          />
+        </Match>
+        <Match when={ready()}>{props.children}</Match>
+      </Switch>
     </UserStoreContext.Provider>
   );
 };

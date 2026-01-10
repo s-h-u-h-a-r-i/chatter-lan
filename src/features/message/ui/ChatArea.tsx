@@ -17,7 +17,6 @@ export const ChatArea: Component<{
 
   const placeHolderMessages = createMemo(() => {
     const userId = userStore.uid();
-    if (!userId) return [];
     return Array.from({ length: 20 }, (_, index) => {
       const isUser = index % 2 === 0;
       return {
