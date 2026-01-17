@@ -22,6 +22,7 @@ import { RoomData } from './room.types';
 
 interface RoomsStoreContext {
   rooms: Accessor<RoomData[]>;
+  roomIds: Accessor<string[]>;
   selectedRoom: Accessor<RoomData | null>;
   error: Accessor<string | null>;
 
@@ -72,6 +73,7 @@ const RoomsStoreProvider: ParentComponent = (props) => {
 
   const context: RoomsStoreContext = {
     rooms: roomsSubscription.rooms,
+    roomIds: roomsSubscription.roomIds,
     selectedRoom,
     error: roomsSubscription.error,
     setSelectedRoomId,
@@ -105,6 +107,8 @@ function useRoomsSubscription(ipAccessor: Accessor<string>) {
   const [rooms, setRooms] = createSignal<RoomData[]>([]);
   const [error, setError] = createSignal<string | null>(null);
 
+  const roomIds = createMemo(() => rooms().map((r) => r.id));
+
   createEffect(() => {
     const ip = ipAccessor();
 
@@ -128,6 +132,7 @@ function useRoomsSubscription(ipAccessor: Accessor<string>) {
 
   return {
     rooms,
+    roomIds,
     error,
   };
 }

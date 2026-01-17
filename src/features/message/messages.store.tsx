@@ -14,6 +14,10 @@ import { useUserStore } from '../user';
 import * as messageRepo from './message.repository';
 import { MessageData } from './message.types';
 
+// =====================================================================
+// Types
+// =====================================================================
+
 type MessagesByRoomId = Record<string, Accessor<MessageData[]>>;
 type LoadingByRoomId = Record<string, Accessor<boolean>>;
 type ErrorsByRoomId = Record<string, Accessor<string | null>>;
@@ -26,78 +30,28 @@ interface MessagesStoreContext {
 
 const MessagesStoreContext = createContext<MessagesStoreContext>();
 
+// =====================================================================
+// Provider Component
+// =====================================================================
+
 const MessagesStoreProvider: ParentComponent = (props) => {
   const userStore = useUserStore();
   const roomsStore = useRoomsStore();
-  const subscriptions = new FirestoreSubscriptionManager();
 
-  const messagesByRoom: MessagesByRoomId = {};
-  const loadingByRoom: LoadingByRoomId = {};
-  const errorsByRoom: ErrorsByRoomId = {};
-
-  createEffect(() => {
-    const ip = userStore.ip();
-
-    const currentRoomIds = new Set(roomsStore.rooms().map((r) => r.id));
-    const subscribedRoomIds = new Set(subscriptions.keys);
-
-    // * Unsubscribe removed rooms
-    subscribedRoomIds.forEach((roomId) => {
-      if (currentRoomIds.has(roomId)) return;
-
-      subscriptions.unsubscribe(roomId);
-      delete messagesByRoom[roomId];
-      delete loadingByRoom[roomId];
-      delete errorsByRoom[roomId];
-    });
-
-    // * Subscribe to new rooms
-    currentRoomIds.forEach((roomId) => {
-      if (subscriptions.has(roomId)) return;
-
-      const [messages, setMessages] = createSignal<MessageData[]>([]);
-      const [loading, setLoading] = createSignal(true);
-      const [error, setError] = createSignal<string | null>(null);
-
-      messagesByRoom[roomId] = messages;
-      loadingByRoom[roomId] = loading;
-      errorsByRoom[roomId] = error;
-
-      subscriptions.subscribe(
-        roomId,
-        messageRepo.subscribeToMessages({
-          ip,
-          roomId,
-          onUpsert(incoming) {
-            setLoading(false);
-            setMessages((prev) => _mergeMessages(prev, incoming));
-          },
-          onRemove(ids) {
-            setMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
-          },
-          onError(err) {
-            setError(err);
-            setLoading(false);
-            subscriptions.unsubscribe(roomId);
-          },
-        })
-      );
-    });
-  });
-
-  onCleanup(() => {
-    subscriptions.clear();
-  });
+  const messagesSubscription = useMessagesSubscription(
+    userStore.ip,
+    roomsStore.roomIds
+  );
 
   const context: MessagesStoreContext = {
     messages(roomId) {
-      return messagesByRoom[roomId]?.() ?? [];
+      return messagesSubscription.messagesByRoom[roomId]?.() ?? [];
     },
     loading(roomId) {
-      return loadingByRoom[roomId]?.() ?? false;
+      return messagesSubscription.loadingByRoom[roomId]?.() ?? false;
     },
     error(roomId) {
-      return errorsByRoom[roomId]?.() ?? null;
+      return messagesSubscription.errorsByRoom[roomId]?.() ?? null;
     },
   };
 
@@ -120,7 +74,83 @@ function useMessagesStore() {
 
 export { MessagesStoreProvider, useMessagesStore };
 
-function _mergeMessages(
+// =====================================================================
+// Messages Subscription Hook
+// =====================================================================
+
+function useMessagesSubscription(
+  ipAccessor: Accessor<string>,
+  roomIdsAccessor: Accessor<string[]>
+) {
+  const subscriptions = new FirestoreSubscriptionManager();
+
+  const messagesByRoom: MessagesByRoomId = {};
+  const loadingByRoom: LoadingByRoomId = {};
+  const errorsByRoom: ErrorsByRoomId = {};
+
+  createEffect(() => {
+    const currentIp = ipAccessor();
+    const currentRoomIds = new Set(roomIdsAccessor());
+    const subscribedRoomIds = new Set(subscriptions.keys);
+
+    // * Remove subscriptions for rooms that no longer exist
+    subscribedRoomIds.forEach((roomId) => {
+      if (currentRoomIds.has(roomId)) return;
+      subscriptions.unsubscribe(roomId);
+      delete messagesByRoom[roomId];
+      delete loadingByRoom[roomId];
+      delete errorsByRoom[roomId];
+    });
+
+    // * Add subscriptions for new rooms
+    currentRoomIds.forEach((roomId) => {
+      if (subscriptions.has(roomId)) return;
+      const [messages, setMessages] = createSignal<MessageData[]>([]);
+      const [loading, setLoading] = createSignal(true);
+      const [error, setError] = createSignal<string | null>(null);
+
+      messagesByRoom[roomId] = messages;
+      loadingByRoom[roomId] = loading;
+      errorsByRoom[roomId] = error;
+
+      subscriptions.subscribe(
+        roomId,
+        messageRepo.subscribeToMessages({
+          ip: currentIp,
+          roomId,
+          onUpsert(incoming) {
+            setLoading(false);
+            setMessages((prev) => mergeMessages(prev, incoming));
+          },
+          onRemove(ids) {
+            setMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
+          },
+          onError(err) {
+            setError(err);
+            setLoading(false);
+            subscriptions.unsubscribe(roomId);
+          },
+        })
+      );
+    });
+  });
+
+  onCleanup(() => {
+    subscriptions.clear();
+  });
+
+  return {
+    messagesByRoom,
+    loadingByRoom,
+    errorsByRoom,
+  };
+}
+
+// =====================================================================
+// Utilities
+// =====================================================================
+
+function mergeMessages(
   prev: MessageData[],
   incoming: MessageData[]
 ): MessageData[] {
