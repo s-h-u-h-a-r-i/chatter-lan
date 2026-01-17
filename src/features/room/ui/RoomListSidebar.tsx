@@ -1,4 +1,4 @@
-import { Component, createMemo, createSignal, For } from 'solid-js';
+import { Component, createMemo, createSignal, For, Show } from 'solid-js';
 
 import { BookUser, Hash, Plus } from '@/ui/icons';
 import { SearchInput } from '@/ui/inputs';
@@ -79,10 +79,9 @@ export const RoomsListSidebar: Component<{
           </For>
         </div>
       </SidebarLayout>
-      <CreateRoomModal
-        isOpen={isCreateModalOpen()}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
+      <Show when={isCreateModalOpen()}>
+        <CreateRoomModal onClose={() => setIsCreateModalOpen(false)} />
+      </Show>
     </>
   );
 };

@@ -72,7 +72,7 @@ const UserStoreProvider: ParentComponent = (props) => {
       </Match>
 
       <Match when={!name()}>
-        <UserNameModal isOpen={true} currentName={null} onSubmit={setName} />
+        <UserNameModal currentName={null} onSubmit={setName} />
       </Match>
 
       <Match when={ready()}>

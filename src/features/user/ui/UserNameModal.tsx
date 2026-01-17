@@ -10,7 +10,6 @@ type FormSubmitEvent = SubmitEvent & {
 };
 
 export const UserNameModal: Component<{
-  isOpen: boolean;
   currentName: string | null;
   onSubmit(name: string): void;
 }> = (props) => {
@@ -47,12 +46,7 @@ export const UserNameModal: Component<{
   };
 
   return (
-    <Modal
-      isOpen={props.isOpen}
-      onClose={() => {}}
-      title="Set Your Username"
-      closeOnOverlayClick={false}
-      closeOnEscape={false}>
+    <Modal title="Set Your Username">
       <form onSubmit={handleSubmit} class={styles.form}>
         <div class={styles.formGroup}>
           <label for="username" class={styles.label}>

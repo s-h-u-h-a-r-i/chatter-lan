@@ -99,7 +99,6 @@ const _AppContent: Component = () => {
       <Show when={pendingRoom()}>
         {(room) => (
           <RoomPassphraseModal
-            isOpen={true}
             room={room()}
             onSuccess={() => {
               setPendingRoomId(null);

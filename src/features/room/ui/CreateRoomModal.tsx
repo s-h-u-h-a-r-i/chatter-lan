@@ -11,7 +11,6 @@ type FormSubmitEvent = SubmitEvent & {
 };
 
 export const CreateRoomModal: Component<{
-  isOpen: boolean;
   onClose(): void;
 }> = (props) => {
   const roomsStore = useRoomsStore();
@@ -66,11 +65,9 @@ export const CreateRoomModal: Component<{
 
   return (
     <Modal
-      isOpen={props.isOpen}
-      onClose={handleClose}
-      title="Create New Room"
-      closeOnOverlayClick={true}
-      closeOnEscape={true}>
+      onEscapePress={handleClose}
+      onOverlayclick={handleClose}
+      title="Create New Room">
       <form onSubmit={handleSubmit} class={styles.form}>
         <div class={styles.formGroup}>
           <label for="room-name" class={styles.label}>

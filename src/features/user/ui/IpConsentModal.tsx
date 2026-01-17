@@ -87,12 +87,7 @@ export const IpConsentModal: Component<{
   });
 
   return (
-    <Modal
-      isOpen={true}
-      onClose={() => {}}
-      title="Network Configuration"
-      closeOnOverlayClick={false}
-      closeOnEscape={false}>
+    <Modal title="Network Configuration">
       <div class={styles.content}>
         <Show
           when={!manualMode()}

@@ -10,28 +10,22 @@ import {
 import styles from './Modal.module.css';
 
 export const Modal: Component<{
-  isOpen: boolean;
-  onClose(): void;
   children: JSX.Element;
   title?: string;
-  closeOnOverlayClick?: boolean;
-  closeOnEscape?: boolean;
+  onOverlayclick?(): void;
+  onEscapePress?(): void;
 }> = (props) => {
   let modalRef: HTMLDivElement | undefined;
   let overlayRef: HTMLDivElement | undefined;
 
   const handleOverlayClick = (e: MouseEvent) => {
-    if (props.closeOnOverlayClick === false || e.target !== e.currentTarget) {
-      return;
-    }
-    props.onClose();
+    if (e.target !== e.currentTarget) return;
+    props.onOverlayclick?.();
   };
 
   const handleEscape = (e: KeyboardEvent) => {
-    if (props.closeOnEscape === false || e.key !== 'Escape' || !props.isOpen) {
-      return;
-    }
-    props.onClose();
+    if (e.key !== 'Escape') return;
+    props.onEscapePress?.();
   };
 
   onMount(() => {
@@ -43,7 +37,7 @@ export const Modal: Component<{
   });
 
   createEffect(() => {
-    if (!props.isOpen || !modalRef) return;
+    if (!modalRef) return;
     requestAnimationFrame(() => {
       const autoFocusElement = modalRef.querySelector(
         '[autofocus]'
@@ -77,32 +71,30 @@ export const Modal: Component<{
   });
 
   return (
-    <Show when={props.isOpen}>
+    <div
+      ref={overlayRef}
+      class={styles.overlay}
+      onClick={handleOverlayClick}
+      role="presentation"
+      tabindex="-1"
+      data-modal-overlay>
       <div
-        ref={overlayRef}
-        class={styles.overlay}
-        onClick={handleOverlayClick}
-        role="presentation"
-        tabindex="-1"
-        data-modal-overlay>
-        <div
-          ref={modalRef}
-          class={styles.modal}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={props.title ? 'modal-title' : undefined}
-          tabindex="0"
-          onClick={(e) => e.stopPropagation()}>
-          <Show when={props.title}>
-            <div class={styles.header}>
-              <h2 class={styles.title} id="modal-title" tabindex="-1">
-                {props.title}
-              </h2>
-            </div>
-          </Show>
-          <div class={styles.content}>{props.children}</div>
-        </div>
+        ref={modalRef}
+        class={styles.modal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={props.title ? 'modal-title' : undefined}
+        tabindex="0"
+        onClick={(e) => e.stopPropagation()}>
+        <Show when={props.title}>
+          <div class={styles.header}>
+            <h2 class={styles.title} id="modal-title" tabindex="-1">
+              {props.title}
+            </h2>
+          </div>
+        </Show>
+        <div class={styles.content}>{props.children}</div>
       </div>
-    </Show>
+    </div>
   );
 };

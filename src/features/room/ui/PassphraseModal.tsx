@@ -12,7 +12,6 @@ type FormSubmitEvent = SubmitEvent & {
 };
 
 export const RoomPassphraseModal: Component<{
-  isOpen: boolean;
   room: RoomData;
   onSuccess(): void;
   onCancel(): void;
@@ -63,11 +62,8 @@ export const RoomPassphraseModal: Component<{
 
   return (
     <Modal
-      isOpen={props.isOpen}
-      onClose={handleCancel}
-      title={`Enter passphrase for "${props.room.name}"`}
-      closeOnOverlayClick={false}
-      closeOnEscape={true}>
+      onEscapePress={handleCancel}
+      title={`Enter passphrase for "${props.room.name}"`}>
       <form onSubmit={handleSubmit} class={styles.form}>
         <div class={styles.formGroup}>
           <label for="passphrase" class={styles.label}>
