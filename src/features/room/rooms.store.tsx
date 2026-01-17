@@ -16,10 +16,13 @@ import { useUserStore } from '../user';
 import * as roomRepo from './room.repository';
 import { RoomData } from './room.types';
 
+// =====================================================================
+// Types & Constants
+// =====================================================================
+
 interface RoomsStoreContext {
   rooms: Accessor<RoomData[]>;
   selectedRoom: Accessor<RoomData | null>;
-  loading: Accessor<boolean>;
   error: Accessor<string | null>;
 
   setSelectedRoomId: Setter<string | null>;
@@ -30,69 +33,49 @@ const ROOMS_SUBSCRIPTION_KEY = 'rooms' as const;
 
 const RoomsStoreContext = createContext<RoomsStoreContext>();
 
+// =====================================================================
+// Provider Component
+// =====================================================================
+
 const RoomsStoreProvider: ParentComponent = (props) => {
   const userStore = useUserStore();
   const cryptoService = useCryptoService();
-  const subscriptions = new FirestoreSubscriptionManager();
+  const roomsSubscription = useRoomsSubscription(userStore.ip);
 
-  const [rooms, setRooms] = createSignal<RoomData[]>([]);
   const [selectedRoomId, setSelectedRoomId] = createSignal<string | null>(null);
-  const [loading, setLoading] = createSignal(true);
-  const [error, setError] = createSignal<string | null>(null);
 
   const selectedRoom = createMemo(() => {
     const id = selectedRoomId();
     if (!id) return null;
-    return rooms().find((r) => r.id === id) ?? null;
+    return roomsSubscription.rooms().find((r) => r.id === id) ?? null;
   });
 
-  createEffect(() => {
+  const createRoom = async (name: string, passphrase: string) => {
     const ip = userStore.ip();
+    const roomId = crypto.randomUUID();
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const saltBase64 = btoa(String.fromCharCode(...salt));
 
-    subscriptions.unsubscribe(ROOMS_SUBSCRIPTION_KEY);
-    setLoading(true);
-    setError(null);
+    await cryptoService.init(roomId, passphrase, salt);
+    const verificationToken = 'ROOM_VERIFICATION';
+    const encrypted = await cryptoService.encrypt(roomId, verificationToken);
 
-    subscriptions.subscribe(
-      ROOMS_SUBSCRIPTION_KEY,
-      roomRepo.subscribeToRooms(
-        ip,
-        _createRoomUpsert(setRooms, setLoading),
-        _createRoomRemove(setRooms),
-        _createError(setError, setLoading)
-      )
-    );
-  });
-
-  onCleanup(() => subscriptions.clear());
+    await roomRepo.createRoom({
+      roomId,
+      ip,
+      name,
+      saltBase64,
+      verificationToken: encrypted.ciphertext,
+      verificationIV: encrypted.iv,
+    });
+  };
 
   const context: RoomsStoreContext = {
-    rooms,
+    rooms: roomsSubscription.rooms,
     selectedRoom,
-    loading,
-    error,
-
+    error: roomsSubscription.error,
     setSelectedRoomId,
-    async createRoom(name, passphrase) {
-      const ip = userStore.ip();
-
-      const roomId = crypto.randomUUID();
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const saltBase64 = btoa(String.fromCharCode(...salt));
-
-      await cryptoService.init(roomId, passphrase, salt);
-      const verificationToken = 'ROOM_VERIFICATION';
-      const encrypted = await cryptoService.encrypt(roomId, verificationToken);
-
-      await roomRepo.createRoom({
-        roomId,
-        ip,
-        name,
-        saltBase64,
-        verificationToken: encrypted.ciphertext,
-        verificationIV: encrypted.iv,
-      });
-    },
+    createRoom,
   };
 
   return (
@@ -112,12 +95,49 @@ function useRoomsStore() {
 
 export { RoomsStoreProvider, useRoomsStore };
 
-function _createRoomUpsert(
-  setRooms: Setter<RoomData[]>,
-  setLoading: Setter<boolean>
-) {
+// =====================================================================
+// Rooms Subscription Hook
+// =====================================================================
+
+function useRoomsSubscription(ipAccessor: Accessor<string>) {
+  const subscriptions = new FirestoreSubscriptionManager();
+
+  const [rooms, setRooms] = createSignal<RoomData[]>([]);
+  const [error, setError] = createSignal<string | null>(null);
+
+  createEffect(() => {
+    const ip = ipAccessor();
+
+    subscriptions.unsubscribe(ROOMS_SUBSCRIPTION_KEY);
+
+    setRooms([]);
+    setError(null);
+
+    subscriptions.subscribe(
+      ROOMS_SUBSCRIPTION_KEY,
+      roomRepo.subscribeToRooms(
+        ip,
+        createRoomUpsertHandler(setRooms),
+        createRoomRemoveHandler(setRooms),
+        (err) => setError(err)
+      )
+    );
+  });
+
+  onCleanup(() => subscriptions.clear());
+
+  return {
+    rooms,
+    error,
+  };
+}
+
+// =====================================================================
+// Subscription Handlers
+// =====================================================================
+
+function createRoomUpsertHandler(setRooms: Setter<RoomData[]>) {
   return (incoming: RoomData[]) => {
-    setLoading(false);
     setRooms((prev) => {
       const map = new Map(prev.map((r) => [r.id, r]));
       incoming.forEach((room) => map.set(room.id, room));
@@ -126,18 +146,8 @@ function _createRoomUpsert(
   };
 }
 
-function _createRoomRemove(setRooms: Setter<RoomData[]>) {
+function createRoomRemoveHandler(setRooms: Setter<RoomData[]>) {
   return (roomIds: string[]) => {
     setRooms((prev) => prev.filter((r) => !roomIds.includes(r.id)));
-  };
-}
-
-function _createError(
-  setError: Setter<string | null>,
-  setLoading: Setter<boolean>
-) {
-  return (err: string) => {
-    setError(err);
-    setLoading(false);
   };
 }
