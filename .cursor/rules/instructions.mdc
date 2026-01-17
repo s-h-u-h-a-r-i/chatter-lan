@@ -4,3 +4,4 @@ alwaysApply: true
 
 - Only use colors from [\_colors.css](/src/styles/_colors.css)
 - If you want to use colors that do not exist in `_colors.css` then they should be added to `_colors.css`
+- When using components, make sure that youn gather context about it and do not assume what it has.

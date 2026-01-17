@@ -11,7 +11,7 @@ export const TextInput: Component<{
   hasError?: boolean;
   hideText?: boolean;
   class?: string;
-  ref?: HTMLInputElement | ((el: HTMLInputElement) => void);
+  ref?: HTMLInputElement | ((el: HTMLInputElement) => void) | undefined;
   onInput?(value: string): void;
   onBlur?(value: string): void;
 }> = (props) => {

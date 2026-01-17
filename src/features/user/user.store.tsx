@@ -13,7 +13,7 @@ import {
 } from 'solid-js';
 
 import { auth } from '@/core/firebase';
-import { UserNameModal } from './ui';
+import { IpConsentModal, UserNameModal } from './ui';
 import { fetchPublicIp } from './user.service';
 
 interface UserStoreContext {
@@ -32,18 +32,28 @@ const UserStoreProvider: ParentComponent = (props) => {
   const [name, setName] = createSignal(
     localStorage.getItem(USERNAME_STORAGE_KEY)
   );
+  const [ip, setIp] = createSignal<string | undefined>();
 
   const [authData] = createResource(async () => {
-    const [userCredential, publicIp] = await Promise.all([
-      signInAnonymously(auth),
-      fetchPublicIp(),
-    ]);
-
-    return {
-      uid: userCredential.user.uid,
-      ip: publicIp,
-    };
+    const userCredential = await signInAnonymously(auth);
+    return userCredential.user.uid;
   });
+
+  const ready = createMemo(() => {
+    const a = authData();
+    const n = name();
+    const i = ip();
+    return a && n && i ? { uid: a, name: n, ip: i } : null;
+  });
+
+  const handleIpSubmit = async (manualIp?: string) => {
+    if (manualIp) {
+      setIp(manualIp);
+    } else {
+      const fetchedIp = await fetchPublicIp();
+      setIp(fetchedIp);
+    }
+  };
 
   createEffect(() => {
     const newName = name();
@@ -52,24 +62,22 @@ const UserStoreProvider: ParentComponent = (props) => {
     }
   });
 
-  const ready = createMemo(() => {
-    const a = authData();
-    const n = name();
-    return a && n ? { authData: a, name: n } : null;
-  });
-
   return (
     <Switch>
+      <Match when={!ip()}>
+        <IpConsentModal
+          onConsent={handleIpSubmit}
+          onManualEntry={handleIpSubmit}
+        />
+      </Match>
+
       <Match when={!name()}>
         <UserNameModal isOpen={true} currentName={null} onSubmit={setName} />
       </Match>
 
       <Match when={ready()}>
         {(data) => (
-          <_UserStoreProviderInner
-            {...data().authData}
-            name={data().name}
-            setName={setName}>
+          <_UserStoreProviderInner {...data()} setName={setName}>
             {props.children}
           </_UserStoreProviderInner>
         )}

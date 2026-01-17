@@ -1,0 +1,135 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 400px;
+}
+
+@media (max-width: 480px) {
+  .content {
+    min-width: auto;
+    width: min(92vw, 420px);
+  }
+}
+
+.description {
+  margin: 0;
+  color: rgba(var(--color-text-primary-rgb), 0.8);
+  line-height: 1.5;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.manualForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+.note {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(var(--color-surface-rgb), 0.35);
+  border: 1px solid rgba(var(--color-surface-rgb), 0.55);
+  color: rgba(var(--color-text-primary-rgb), 0.75);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.error {
+  padding: 0.75rem;
+  background-color: rgba(var(--color-error-rgb), 0.1);
+  border: 1px solid rgba(var(--color-error-rgb), 0.3);
+  border-radius: 8px;
+  color: var(--color-error);
+  font-size: 0.875rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .actions {
+    justify-content: center;
+  }
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 0.625rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: (
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease
+  );
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--color-accent-soft-rgb), 0.9);
+    outline-offset: 2px;
+  }
+}
+
+.primaryButton {
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-soft) 0%,
+    rgba(var(--color-accent-soft-rgb), 0.85) 100%
+  );
+  color: white;
+
+  &:not(:disabled):hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--color-accent-soft-rgb), 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+    filter: grayscale(15%);
+  }
+}
+
+.secondaryButton {
+  background-color: rgba(var(--color-surface-rgb), 0.5);
+  color: var(--color-text-primary);
+
+  &:not(:disabled):hover {
+    background-color: rgba(var(--color-surface-rgb), 0.7);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: rgba(var(--color-surface-rgb), 0.3);
+  }
+}
