@@ -16,6 +16,10 @@ import { auth } from '@/core/firebase';
 import { IpConsentModal, UserNameModal } from './ui';
 import { fetchPublicIp } from './user.service';
 
+// =====================================================================
+// Types & Constants
+// =====================================================================
+
 interface UserStoreContext {
   ip: Accessor<string>;
   uid: Accessor<string>;
@@ -25,61 +29,47 @@ interface UserStoreContext {
 }
 
 const USERNAME_STORAGE_KEY = 'chatter-lan-username';
+const IP_CONSENT_STORAGE_KEY = 'chatter-lan-ip-consent';
 
 const UserStoreContext = createContext<UserStoreContext>();
 
-const UserStoreProvider: ParentComponent = (props) => {
-  const [name, setName] = createSignal(
-    localStorage.getItem(USERNAME_STORAGE_KEY)
-  );
-  const [ip, setIp] = createSignal<string | undefined>();
+// =====================================================================
+// Provider Component
+// =====================================================================
 
-  const [authData] = createResource(async () => {
-    const userCredential = await signInAnonymously(auth);
-    return userCredential.user.uid;
-  });
+const UserStoreProvider: ParentComponent = (props) => {
+  const authState = useAuth();
+  const ipManagement = useIp();
+  const username = useUsername();
 
   const ready = createMemo(() => {
-    const a = authData();
-    const n = name();
-    const i = ip();
-    return a && n && i ? { uid: a, name: n, ip: i } : null;
-  });
+    const uid = authState.uid();
+    const name = username.name();
+    const ip = ipManagement.ip();
 
-  const handleIpSubmit = async (manualIp?: string) => {
-    if (manualIp) {
-      setIp(manualIp);
-    } else {
-      const fetchedIp = await fetchPublicIp();
-      setIp(fetchedIp);
-    }
-  };
+    if (!uid || !name || !ip) return null;
 
-  createEffect(() => {
-    const newName = name();
-    if (newName) {
-      localStorage.setItem(USERNAME_STORAGE_KEY, newName);
-    }
+    return { uid, name, ip };
   });
 
   return (
     <Switch>
-      <Match when={!ip()}>
+      <Match when={!ipManagement.ip()}>
         <IpConsentModal
-          onConsent={handleIpSubmit}
-          onManualEntry={handleIpSubmit}
+          onConsent={ipManagement.handleIpSubmit}
+          onManualEntry={ipManagement.handleIpSubmit}
         />
       </Match>
 
-      <Match when={!name()}>
-        <UserNameModal currentName={null} onSubmit={setName} />
+      <Match when={!username.name()}>
+        <UserNameModal currentName={null} onSubmit={username.setName} />
       </Match>
 
       <Match when={ready()}>
         {(data) => (
-          <_UserStoreProviderInner {...data()} setName={setName}>
+          <UserStoreProviderInner {...data()} setName={username.setName}>
             {props.children}
-          </_UserStoreProviderInner>
+          </UserStoreProviderInner>
         )}
       </Match>
     </Switch>
@@ -96,16 +86,20 @@ function useUserStore() {
 
 export { UserStoreProvider, useUserStore };
 
-const _UserStoreProviderInner: ParentComponent<{
+// =====================================================================
+// Inner Provider
+// =====================================================================
+
+const UserStoreProviderInner: ParentComponent<{
+  uid: string;
   name: string;
   ip: string;
-  uid: string;
   setName(name: string): void;
 }> = (props) => {
   const context: UserStoreContext = {
+    uid: () => props.uid,
     name: () => props.name,
     ip: () => props.ip,
-    uid: () => props.uid,
     setName: props.setName,
   };
 
@@ -115,3 +109,111 @@ const _UserStoreProviderInner: ParentComponent<{
     </UserStoreContext.Provider>
   );
 };
+
+// =====================================================================
+// Local Storage Utilities
+// =====================================================================
+
+const storage = {
+  getUsername: () => localStorage.getItem(USERNAME_STORAGE_KEY),
+  setUsername: (name: string) =>
+    localStorage.setItem(USERNAME_STORAGE_KEY, name),
+  getIpConsent: () => localStorage.getItem(IP_CONSENT_STORAGE_KEY) === 'true',
+  setIpConsent: (consent: boolean) => {
+    if (consent) {
+      localStorage.setItem(IP_CONSENT_STORAGE_KEY, 'true');
+    } else {
+      localStorage.removeItem(IP_CONSENT_STORAGE_KEY);
+    }
+  },
+};
+
+// =====================================================================
+// Auth Hook
+// =====================================================================
+
+function useAuth() {
+  const [authData] = createResource(async () => {
+    const userCredential = await signInAnonymously(auth);
+    return userCredential.user.uid;
+  });
+
+  return {
+    uid: authData,
+  };
+}
+
+// =====================================================================
+// IP Management Hook
+// =====================================================================
+
+function useIp() {
+  const [ip, setIp] = createSignal<string | undefined>();
+  const [ipConsentGiven, setIpConsentGiven] = createSignal(
+    storage.getIpConsent()
+  );
+  const [ipError, setIpError] = createSignal<string | null>(null);
+
+  createResource(
+    () => ipConsentGiven() && !ip(),
+    async () => {
+      try {
+        const fetchedIp = await fetchPublicIp();
+        setIp(fetchedIp);
+        setIpError(null);
+      } catch (error) {
+        console.error('Failed to auto-fetch IP:', error);
+        setIpError(
+          error instanceof Error ? error.message : 'Failed to fetch IP'
+        );
+        setIpConsentGiven(false);
+        storage.setIpConsent(false);
+      }
+    }
+  );
+
+  const handleIpSubmit = async (manualIp?: string) => {
+    setIpError(null);
+
+    try {
+      if (manualIp) {
+        setIp(manualIp);
+      } else {
+        const fetchedIp = await fetchPublicIp();
+        setIp(fetchedIp);
+        setIpConsentGiven(true);
+        storage.setIpConsent(true);
+      }
+    } catch (error) {
+      setIpError(error instanceof Error ? error.message : 'Failed to fetch IP');
+      throw error;
+    }
+  };
+
+  return {
+    ip,
+    ipError,
+    ipConsentGiven,
+    handleIpSubmit,
+  };
+}
+
+// =====================================================================
+// Username Management Hook
+// =====================================================================
+
+function useUsername() {
+  const [name, setName] = createSignal(storage.getUsername());
+
+  createEffect(() => {
+    const newName = name();
+    if (newName) {
+      storage.setUsername(newName);
+    }
+  });
+
+  return {
+    name,
+    setName,
+  };
+}
