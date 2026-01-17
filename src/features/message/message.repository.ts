@@ -40,7 +40,6 @@ export function subscribeToMessages(params: {
   onRemove: (messageIds: string[]) => void;
   onError: (error: string) => void;
 }): Unsubscribe {
-  // TODO: Use room reference?
   const messagesRef = _getMessagesCollectionRef(params.ip, params.roomId);
 
   return onSnapshot(

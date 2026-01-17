@@ -19,12 +19,10 @@ import { MessageData } from './message.types';
 // =====================================================================
 
 type MessagesByRoomId = Record<string, Accessor<MessageData[]>>;
-type LoadingByRoomId = Record<string, Accessor<boolean>>;
 type ErrorsByRoomId = Record<string, Accessor<string | null>>;
 
 interface MessagesStoreContext {
   messages(roomId: string): MessageData[];
-  loading(roomId: string): boolean;
   error(roomId: string): string | null;
 }
 
@@ -46,9 +44,6 @@ const MessagesStoreProvider: ParentComponent = (props) => {
   const context: MessagesStoreContext = {
     messages(roomId) {
       return messagesSubscription.messagesByRoom[roomId]?.() ?? [];
-    },
-    loading(roomId) {
-      return messagesSubscription.loadingByRoom[roomId]?.() ?? false;
     },
     error(roomId) {
       return messagesSubscription.errorsByRoom[roomId]?.() ?? null;
@@ -85,7 +80,6 @@ function useMessagesSubscription(
   const subscriptions = new FirestoreSubscriptionManager();
 
   const messagesByRoom: MessagesByRoomId = {};
-  const loadingByRoom: LoadingByRoomId = {};
   const errorsByRoom: ErrorsByRoomId = {};
 
   createEffect(() => {
@@ -98,7 +92,6 @@ function useMessagesSubscription(
       if (currentRoomIds.has(roomId)) return;
       subscriptions.unsubscribe(roomId);
       delete messagesByRoom[roomId];
-      delete loadingByRoom[roomId];
       delete errorsByRoom[roomId];
     });
 
@@ -106,11 +99,9 @@ function useMessagesSubscription(
     currentRoomIds.forEach((roomId) => {
       if (subscriptions.has(roomId)) return;
       const [messages, setMessages] = createSignal<MessageData[]>([]);
-      const [loading, setLoading] = createSignal(true);
       const [error, setError] = createSignal<string | null>(null);
 
       messagesByRoom[roomId] = messages;
-      loadingByRoom[roomId] = loading;
       errorsByRoom[roomId] = error;
 
       subscriptions.subscribe(
@@ -119,7 +110,6 @@ function useMessagesSubscription(
           ip: currentIp,
           roomId,
           onUpsert(incoming) {
-            setLoading(false);
             setMessages((prev) => mergeMessages(prev, incoming));
           },
           onRemove(ids) {
@@ -127,7 +117,6 @@ function useMessagesSubscription(
           },
           onError(err) {
             setError(err);
-            setLoading(false);
             subscriptions.unsubscribe(roomId);
           },
         })
@@ -141,7 +130,6 @@ function useMessagesSubscription(
 
   return {
     messagesByRoom,
-    loadingByRoom,
     errorsByRoom,
   };
 }
