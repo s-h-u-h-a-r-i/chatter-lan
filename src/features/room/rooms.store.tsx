@@ -24,9 +24,10 @@ interface RoomsStoreContext {
   rooms: Accessor<RoomData[]>;
   roomIds: Accessor<string[]>;
   selectedRoom: Accessor<RoomData | null>;
+  selectedRoomId: Accessor<string | null>;
   error: Accessor<string | null>;
 
-  setSelectedRoomId: Setter<string | null>;
+  selectRoomById: Setter<string | null>;
   createRoom(name: string, passphrase: string): Promise<void>;
 }
 
@@ -43,12 +44,17 @@ const RoomsStoreProvider: ParentComponent = (props) => {
   const cryptoService = useCryptoService();
   const roomsSubscription = useRoomsSubscription(userStore.ip);
 
-  const [selectedRoomId, setSelectedRoomId] = createSignal<string | null>(null);
+  const [rawSelectedRoomId, setRawSelectedRoomId] = createSignal<string | null>(null);
 
   const selectedRoom = createMemo(() => {
-    const id = selectedRoomId();
+    const id = rawSelectedRoomId();
     if (!id) return null;
     return roomsSubscription.rooms().find((r) => r.id === id) ?? null;
+  });
+
+  const selectedRoomId = createMemo(() => {
+    const room = selectedRoom();
+    return room ? room.id : null;
   });
 
   const createRoom = async (name: string, passphrase: string) => {
@@ -75,8 +81,9 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     rooms: roomsSubscription.rooms,
     roomIds: roomsSubscription.roomIds,
     selectedRoom,
+    selectedRoomId,
     error: roomsSubscription.error,
-    setSelectedRoomId,
+    selectRoomById: setRawSelectedRoomId,
     createRoom,
   };
 

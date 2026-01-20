@@ -104,7 +104,7 @@ const _AppContent: Component = () => {
               setPendingRoomId(null);
             }}
             onCancel={() => {
-              roomsStore.setSelectedRoomId(null);
+              roomsStore.selectRoomById(null);
               setPendingRoomId(null);
             }}
           />

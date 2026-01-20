@@ -61,7 +61,7 @@ export const RoomsListSidebar: Component<{
                   [styles.active]: room.id === roomsStore.selectedRoom()?.id,
                 }}
                 onClick={() => {
-                  roomsStore.setSelectedRoomId(room.id);
+                  roomsStore.selectRoomById(room.id);
                   props.onCloseSidebar();
                 }}>
                 <div class={styles.roomIcon}>
