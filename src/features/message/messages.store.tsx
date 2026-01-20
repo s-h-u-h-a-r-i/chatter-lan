@@ -2,6 +2,7 @@ import {
   Accessor,
   createContext,
   createEffect,
+  createMemo,
   createSignal,
   onCleanup,
   ParentComponent,
@@ -15,15 +16,15 @@ import * as messageRepo from './message.repository';
 import { MessageData } from './message.types';
 
 // =====================================================================
-// Types
+// Types & Constants
 // =====================================================================
 
-type MessagesByRoomId = Record<string, Accessor<MessageData[]>>;
-type ErrorsByRoomId = Record<string, Accessor<string | null>>;
-
 interface MessagesStoreContext {
-  messages(roomId: string): MessageData[];
-  error(roomId: string): string | null;
+  current: Accessor<{
+    roomId: string;
+    messages: MessageData[];
+    error: string | null;
+  } | null>;
 }
 
 const MessagesStoreContext = createContext<MessagesStoreContext>();
@@ -38,16 +39,20 @@ const MessagesStoreProvider: ParentComponent = (props) => {
 
   const messagesSubscription = useMessagesSubscription(
     userStore.ip,
-    roomsStore.roomIds
+    roomsStore.selectedRoomId
   );
 
   const context: MessagesStoreContext = {
-    messages(roomId) {
-      return messagesSubscription.messagesByRoom[roomId]?.() ?? [];
-    },
-    error(roomId) {
-      return messagesSubscription.errorsByRoom[roomId]?.() ?? null;
-    },
+    current: createMemo(() => {
+      const roomId = roomsStore.selectedRoomId();
+      if (!roomId) return null;
+
+      return {
+        roomId,
+        messages: messagesSubscription.messages(),
+        error: messagesSubscription.error(),
+      };
+    }),
   };
 
   return (
@@ -75,53 +80,42 @@ export { MessagesStoreProvider, useMessagesStore };
 
 function useMessagesSubscription(
   ipAccessor: Accessor<string>,
-  roomIdsAccessor: Accessor<string[]>
+  selectedRoomIdAccessor: Accessor<string | null>
 ) {
+  const CURRENT_ROOM_KEY = 'current_room' as const;
   const subscriptions = new FirestoreSubscriptionManager();
 
-  const messagesByRoom: MessagesByRoomId = {};
-  const errorsByRoom: ErrorsByRoomId = {};
+  const [messages, setMessages] = createSignal<MessageData[]>([]);
+  const [error, setError] = createSignal<string | null>(null);
 
   createEffect(() => {
     const currentIp = ipAccessor();
-    const currentRoomIds = new Set(roomIdsAccessor());
-    const subscribedRoomIds = new Set(subscriptions.keys);
+    const selectedRoomId = selectedRoomIdAccessor();
 
-    // * Remove subscriptions for rooms that no longer exist
-    subscribedRoomIds.forEach((roomId) => {
-      if (currentRoomIds.has(roomId)) return;
-      subscriptions.unsubscribe(roomId);
-      delete messagesByRoom[roomId];
-      delete errorsByRoom[roomId];
-    });
+    subscriptions.unsubscribe(CURRENT_ROOM_KEY);
 
-    // * Add subscriptions for new rooms
-    currentRoomIds.forEach((roomId) => {
-      if (subscriptions.has(roomId)) return;
-      const [messages, setMessages] = createSignal<MessageData[]>([]);
-      const [error, setError] = createSignal<string | null>(null);
+    setMessages([]);
+    setError(null);
 
-      messagesByRoom[roomId] = messages;
-      errorsByRoom[roomId] = error;
+    if (!selectedRoomId) return;
 
-      subscriptions.subscribe(
-        roomId,
-        messageRepo.subscribeToMessages({
-          ip: currentIp,
-          roomId,
-          onUpsert(incoming) {
-            setMessages((prev) => mergeMessages(prev, incoming));
-          },
-          onRemove(ids) {
-            setMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
-          },
-          onError(err) {
-            setError(err);
-            subscriptions.unsubscribe(roomId);
-          },
-        })
-      );
-    });
+    subscriptions.subscribe(
+      CURRENT_ROOM_KEY,
+      messageRepo.subscribeToMessages({
+        ip: currentIp,
+        roomId: selectedRoomId,
+        onUpsert(incoming) {
+          setMessages((prev) => mergeMessages(prev, incoming));
+        },
+        onRemove(ids) {
+          setMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
+        },
+        onError(err) {
+          setError(err);
+          subscriptions.unsubscribe(CURRENT_ROOM_KEY);
+        },
+      })
+    );
   });
 
   onCleanup(() => {
@@ -129,8 +123,8 @@ function useMessagesSubscription(
   });
 
   return {
-    messagesByRoom,
-    errorsByRoom,
+    messages,
+    error,
   };
 }
 

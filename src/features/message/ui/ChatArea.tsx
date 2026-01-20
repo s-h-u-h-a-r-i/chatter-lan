@@ -71,7 +71,6 @@ export const ChatArea: Component<{
 
             <div class={styles.messagesArea}>
               <For each={placeHolderMessages()}>
-                {/* <For each={messagesStore.messages(room().id)}> */}
                 {(message) => (
                   <Message
                     room={room()}
@@ -80,6 +79,19 @@ export const ChatArea: Component<{
                   />
                 )}
               </For>
+              {/* <Show when={messagesStore.current()}>
+                {(data) => (
+                  <For each={data().messages}>
+                    {(message) => (
+                      <Message
+                        room={room()}
+                        message={message}
+                        uid={userStore.uid()}
+                      />
+                    )}
+                  </For>
+                )}
+              </Show> */}
             </div>
           </>
         )}
