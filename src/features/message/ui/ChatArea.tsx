@@ -79,7 +79,7 @@ export const ChatArea: Component<{
                   />
                 )}
               </For>
-              {/* <Show when={messagesStore.current()}>
+              {/* <Show when={messagesStore.forSelectedRoom()}>
                 {(data) => (
                   <For each={data().messages}>
                     {(message) => (

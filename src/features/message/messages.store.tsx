@@ -20,8 +20,7 @@ import { MessageData } from './message.types';
 // =====================================================================
 
 interface MessagesStoreContext {
-  current: Accessor<{
-    roomId: string;
+  forSelectedRoom: Accessor<{
     messages: MessageData[];
     error: string | null;
   } | null>;
@@ -43,12 +42,10 @@ const MessagesStoreProvider: ParentComponent = (props) => {
   );
 
   const context: MessagesStoreContext = {
-    current: createMemo(() => {
-      const roomId = roomsStore.selectedRoomId();
-      if (!roomId) return null;
+    forSelectedRoom: createMemo(() => {
+      if (!roomsStore.selectedRoom()) return null;
 
       return {
-        roomId,
         messages: messagesSubscription.messages(),
         error: messagesSubscription.error(),
       };
