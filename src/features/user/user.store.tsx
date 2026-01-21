@@ -20,7 +20,7 @@ import { fetchPublicIp } from './user.service';
 // Types & Constants
 // =====================================================================
 
-interface UserStoreContext {
+interface UserStore {
   ip: Accessor<string>;
   uid: Accessor<string>;
   name: Accessor<string>;
@@ -31,7 +31,7 @@ interface UserStoreContext {
 const USERNAME_STORAGE_KEY = 'chatter-lan-username';
 const IP_CONSENT_STORAGE_KEY = 'chatter-lan-ip-consent';
 
-const UserStoreContext = createContext<UserStoreContext>();
+const UserStoreContext = createContext<UserStore>();
 
 // =====================================================================
 // Provider Component
@@ -96,7 +96,7 @@ const UserStoreProviderInner: ParentComponent<{
   ip: string;
   setName(name: string): void;
 }> = (props) => {
-  const context: UserStoreContext = {
+  const context: UserStore = {
     uid: () => props.uid,
     name: () => props.name,
     ip: () => props.ip,

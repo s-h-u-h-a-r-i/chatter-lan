@@ -9,14 +9,14 @@ import {
 } from 'solid-js';
 
 import { CryptoServiceProvider, useCryptoService } from '@/core/crypto';
-import { ChatArea, MessagesStoreProvider } from '@/features/message';
+import { ChatArea, RoomMessagesStoreProvider } from '@/features/messages';
 import {
   InfoSidebar,
   RoomPassphraseModal,
   RoomsListSidebar,
   RoomsStoreProvider,
   useRoomsStore,
-} from '@/features/room';
+} from '@/features/rooms';
 import { UserStoreProvider } from '@/features/user';
 import { TriangleAlert } from '@/ui/icons';
 import styles from './App.module.css';
@@ -27,9 +27,9 @@ const App: Component = () => (
       <CryptoServiceProvider>
         <UserStoreProvider>
           <RoomsStoreProvider>
-            <MessagesStoreProvider>
+            <RoomMessagesStoreProvider>
               <_AppContent />
-            </MessagesStoreProvider>
+            </RoomMessagesStoreProvider>
           </RoomsStoreProvider>
         </UserStoreProvider>
       </CryptoServiceProvider>

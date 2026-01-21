@@ -20,7 +20,7 @@ import { RoomData } from './room.types';
 // Types & Constants
 // =====================================================================
 
-interface RoomsStoreContext {
+interface RoomsStore {
   rooms: Accessor<RoomData[]>;
   roomIds: Accessor<string[]>;
   selectedRoom: Accessor<RoomData | null>;
@@ -33,7 +33,7 @@ interface RoomsStoreContext {
 
 const ROOMS_SUBSCRIPTION_KEY = 'rooms' as const;
 
-const RoomsStoreContext = createContext<RoomsStoreContext>();
+const RoomsStoreContext = createContext<RoomsStore>();
 
 // =====================================================================
 // Provider Component
@@ -44,7 +44,9 @@ const RoomsStoreProvider: ParentComponent = (props) => {
   const cryptoService = useCryptoService();
   const roomsSubscription = useRoomsSubscription(userStore.ip);
 
-  const [rawSelectedRoomId, setRawSelectedRoomId] = createSignal<string | null>(null);
+  const [rawSelectedRoomId, setRawSelectedRoomId] = createSignal<string | null>(
+    null
+  );
 
   const selectedRoom = createMemo(() => {
     const id = rawSelectedRoomId();
@@ -77,7 +79,7 @@ const RoomsStoreProvider: ParentComponent = (props) => {
     });
   };
 
-  const context: RoomsStoreContext = {
+  const context: RoomsStore = {
     rooms: roomsSubscription.rooms,
     roomIds: roomsSubscription.roomIds,
     selectedRoom,

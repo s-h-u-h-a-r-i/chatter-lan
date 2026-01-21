@@ -8,13 +8,13 @@ import {
 } from 'solid-js';
 
 import { useCryptoService } from '@/core/crypto';
-import { useRoomsStore } from '@/features/room';
-import { RoomData } from '@/features/room/room.types';
+import { useRoomsStore } from '@/features/rooms';
+import { RoomData } from '@/features/rooms/room.types';
 import { useUserStore } from '@/features/user';
 import { Info, Menu, MessageCircle } from '@/ui/icons';
 import { decryptMessageContent } from '../message.crypto';
 import { MessageData } from '../message.types';
-import { useMessagesStore } from '../messages.store';
+import { useRoomMessagesStore } from '../room-messages.store';
 import styles from './ChatArea.module.css';
 
 export const ChatArea: Component<{
@@ -22,9 +22,8 @@ export const ChatArea: Component<{
   onToggleInfoSidebar(): void;
 }> = (props) => {
   const roomsStore = useRoomsStore();
-  const messagesStore = useMessagesStore();
   const userStore = useUserStore();
-  const cryptoService = useCryptoService();
+  const roomMessagesStore = useRoomMessagesStore();
 
   const placeHolderMessages = createMemo(() => {
     const userId = userStore.uid();
@@ -45,7 +44,7 @@ export const ChatArea: Component<{
 
   return (
     <div class={styles.container}>
-      <Show when={roomsStore.selectedRoom()} fallback={<EmptyState />}>
+      <Show when={roomsStore.selectedRoom()} fallback={<_EmptyState />}>
         {(room) => (
           <>
             <div class={styles.header}>
@@ -70,6 +69,10 @@ export const ChatArea: Component<{
             </div>
 
             <div class={styles.messagesArea}>
+              <Show when={roomMessagesStore.error()}>
+                {(error) => <div class={styles.error}>Error: {error()}</div>}
+              </Show>
+
               <For each={placeHolderMessages()}>
                 {(message) => (
                   <Message
@@ -79,18 +82,19 @@ export const ChatArea: Component<{
                   />
                 )}
               </For>
-              {/* <Show when={messagesStore.forSelectedRoom()}>
-                {(data) => (
-                  <For each={data().messages}>
-                    {(message) => (
-                      <Message
-                        room={room()}
-                        message={message}
-                        uid={userStore.uid()}
-                      />
-                    )}
-                  </For>
-                )}
+
+              {/* <Show
+                when={roomMessagesStore.messages().length > 0}
+                fallback={<div>This should show nice empty room</div>}>
+                <For each={roomMessagesStore.messages()}>
+                  {(message) => (
+                    <Message
+                      room={room()}
+                      message={message}
+                      uid={userStore.uid()}
+                    />
+                  )}
+                </For>
               </Show> */}
             </div>
           </>
@@ -151,7 +155,7 @@ const Message: Component<{
   );
 };
 
-const EmptyState: Component = (props) => (
+const _EmptyState: Component = (props) => (
   <div class={styles.emptyState}>
     <div class={styles.emptyIcon}>
       <MessageCircle size={64} strokeWidth={1.5} />
