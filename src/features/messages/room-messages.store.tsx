@@ -37,7 +37,7 @@ export const RoomMessagesStoreProvider: ParentComponent = (props) => {
 
   createEffect(() => {
     const roomId = roomsStore.selectedRoomId();
-    const ip = userStore.ip();
+    const ip = userStore.ip(); // guaranteed non-null by parent provider guard
 
     if (!roomId) return;
 
