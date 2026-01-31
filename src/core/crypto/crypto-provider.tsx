@@ -5,7 +5,7 @@ import {
   useContext,
 } from 'solid-js';
 
-import { CryptoService } from './crypto.service';
+import { CryptoService } from './crypto-service';
 
 const CryptoServiceContext = createContext<CryptoService>();
 

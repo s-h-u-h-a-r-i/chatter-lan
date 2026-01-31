@@ -1,1 +1,1 @@
-export * from './object.guard';
+export * from './object-guards';

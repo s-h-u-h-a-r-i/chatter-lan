@@ -8,7 +8,7 @@ import type {
   WorkerMessage,
   WorkerRemoveKeyMessage,
   WorkerResponse,
-} from './crypto.types';
+} from './crypto-types';
 
 const cryptoKeys = new Map<string, CryptoKey>();
 

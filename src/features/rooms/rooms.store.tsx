@@ -16,9 +16,7 @@ import { useUserStore } from '../user';
 import * as roomRepo from './room.repository';
 import { RoomData } from './room.types';
 
-// =====================================================================
-// Types & Constants
-// =====================================================================
+// #region Types & Constants
 
 interface RoomsStore {
   rooms: Accessor<RoomData[]>;
@@ -35,9 +33,9 @@ const ROOMS_SUBSCRIPTION_KEY = 'rooms' as const;
 
 const RoomsStoreContext = createContext<RoomsStore>();
 
-// =====================================================================
-// Provider Component
-// =====================================================================
+// #endregion Types & Constants
+
+// #region Provider Component
 
 const RoomsStoreProvider: ParentComponent = (props) => {
   const userStore = useUserStore();
@@ -104,11 +102,11 @@ function useRoomsStore() {
   return context;
 }
 
+// #endregion Provider Component
+
 export { RoomsStoreProvider, useRoomsStore };
 
-// =====================================================================
-// Rooms Subscription Hook
-// =====================================================================
+// #region Rooms Subscription Hook
 
 function useRoomsSubscription(ipAccessor: Accessor<string>) {
   const subscriptions = new FirestoreSubscriptionManager();
@@ -146,9 +144,9 @@ function useRoomsSubscription(ipAccessor: Accessor<string>) {
   };
 }
 
-// =====================================================================
-// Subscription Handlers
-// =====================================================================
+// #endregion Rooms Subscription Hook
+
+// #region Subscription Handlers
 
 function createRoomUpsertHandler(setRooms: Setter<RoomData[]>) {
   return (incoming: RoomData[]) => {
@@ -165,3 +163,5 @@ function createRoomRemoveHandler(setRooms: Setter<RoomData[]>) {
     setRooms((prev) => prev.filter((r) => !roomIds.includes(r.id)));
   };
 }
+
+// #endregion Subscription Handlers

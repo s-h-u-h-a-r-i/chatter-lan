@@ -2,7 +2,7 @@ import {
   EncryptedData,
   WorkerMessageWithoutId,
   WorkerResponse,
-} from './crypto.types';
+} from './crypto-types';
 
 /**
  * ### Cryptographic service for secure decryption
@@ -156,7 +156,7 @@ export class CryptoService {
    * message handling to coordinate asynchronous operations.
    */
   #initializeWorker() {
-    this.#worker = new Worker(new URL('./crypto.worker.ts', import.meta.url), {
+    this.#worker = new Worker(new URL('./crypto-worker.ts', import.meta.url), {
       type: 'module',
     });
 
