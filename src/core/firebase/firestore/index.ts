@@ -1,2 +1,2 @@
-export * from './firestore-paths';
-export * from './firestore-subscription-manager';
+export * from './firestore.paths';
+export * from './firestore.subscription-manager';
