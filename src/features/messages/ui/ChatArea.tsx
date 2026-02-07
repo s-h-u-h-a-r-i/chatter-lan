@@ -13,8 +13,8 @@ import { RoomData } from '@/features/rooms/room.types';
 import { useUserStore } from '@/features/user';
 import { Info, Menu, MessageCircle } from '@/ui/icons';
 import { decryptMessageContent } from '../message.crypto';
-import { MessageData } from '../message.types';
 import { useRoomMessagesStore } from '../room-messages.store';
+import { MessageData } from '../schemas';
 import styles from './ChatArea.module.css';
 
 export const ChatArea: Component<{

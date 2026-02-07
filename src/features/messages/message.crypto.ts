@@ -1,10 +1,10 @@
 import { CryptoService, EncryptedData } from '@/core/crypto';
-import { EncryptedMessageContent } from './message.types';
+import { MessageEncryptedContent } from './schemas';
 
 export async function decryptMessageContent(params: {
   roomId: string;
   cryptoService: CryptoService;
-  encryptedContent: EncryptedMessageContent;
+  encryptedContent: MessageEncryptedContent;
   roomSalt: string;
 }): Promise<string | null> {
   try {
