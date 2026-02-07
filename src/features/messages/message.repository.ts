@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore';
 
 import { firestore, fsPaths } from '@/core/firebase';
+import z from 'zod';
 import {
   MessageData,
   MessageDataFirestore,
@@ -79,7 +80,7 @@ function _handleUpsertChange(change: DocumentChange) {
   if (!parsed.success) {
     console.warn('Failed to parse message doc:', {
       id: change.doc.id,
-      issues: parsed.error.issues,
+      issues: z.prettifyError(parsed.error),
     });
     return { instruction: 'remove' as const, id: change.doc.id };
   }
