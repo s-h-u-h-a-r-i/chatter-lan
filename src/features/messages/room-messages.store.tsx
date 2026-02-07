@@ -11,7 +11,7 @@ import {
 import { useRoomsStore } from '../rooms';
 import { useUserStore } from '../user';
 import * as messageRepo from './message.repository';
-import { MessageData } from './message.types';
+import { MessageData } from './schemas';
 
 // =====================================================================
 // Types
