@@ -1,5 +1,4 @@
-import z from 'zod';
-import { MessageDataFirestoreSchema } from './message.firestore.schema';
+import z from 'zod/mini';
 
 const MessageEncryptedContentSchema = z.object({
   ciphertext: z.string(),
@@ -13,15 +12,6 @@ const MessageDataSchema = z.object({
   senderName: z.string(),
   encryptedContent: MessageEncryptedContentSchema,
 });
-
-export const MessageDataFromFirestoreSchema = MessageDataFirestoreSchema.extend(
-  { id: z.string() }
-).transform(
-  (document): MessageData => ({
-    ...document,
-    createdAt: document.createdAt.toDate(),
-  })
-);
 
 export type MessageEncryptedContent = z.infer<
   typeof MessageEncryptedContentSchema

@@ -12,7 +12,7 @@ import { firestore, fsPaths } from '@/core/firebase';
 import {
   MessageData,
   MessageDataFirestore,
-  MessageDataFromFirestoreSchema,
+  MessageDataFirestoreSchema,
 } from './schemas';
 
 export async function createMessage(
@@ -74,20 +74,23 @@ export function subscribeToMessages(params: {
 }
 
 function _handleUpsertChange(change: DocumentChange) {
-  const parsed = MessageDataFromFirestoreSchema.safeParse({
-    ...change.doc.data(),
-    id: change.doc.id,
-  });
+  const parsed = MessageDataFirestoreSchema.safeParse(change.doc.data());
 
   if (!parsed.success) {
-    console.warn('Failed to convert message:', {
+    console.warn('Failed to parse message doc:', {
       id: change.doc.id,
       issues: parsed.error.issues,
     });
     return { instruction: 'remove' as const, id: change.doc.id };
   }
 
-  return { instruction: 'upsert' as const, data: parsed.data };
+  const finalData: MessageData = {
+    ...parsed.data,
+    id: change.doc.id,
+    createdAt: parsed.data.createdAt.toDate(),
+  };
+
+  return { instruction: 'upsert' as const, data: finalData };
 }
 
 function _getMessagesCollectionRef(ip: string, roomId: string) {

@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import z from 'zod';
+import z from 'zod/mini';
 
 export const MessageEncryptedContentFirestoreSchema = z.object({
   ciphertext: z.string(),
