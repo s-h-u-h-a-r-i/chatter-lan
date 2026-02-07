@@ -1,4 +1,4 @@
-import z from 'zod/mini';
+import z from 'zod';
 
 const MessageEncryptedContentSchema = z.object({
   ciphertext: z.string(),
