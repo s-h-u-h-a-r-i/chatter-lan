@@ -172,6 +172,44 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
+   * Validates the success value with a predicate.
+   *
+   * When the predicate returns `true`, the current value continues through the
+   * pipeline. When it returns `false`, the pipeline switches to `Err` using the
+   * value produced by `onFail`.
+   *
+   * @param predicate Guard condition evaluated on success values.
+   * @param onFail Error factory called when the predicate fails.
+   * @example
+   * const result = await AsyncPipeline.of('hello')
+   *   .ensure(
+   *     (value) => value.length >= 3,
+   *     () => 'Too short'
+   *   )
+   *   .execute();
+   */
+  ensure<U extends T, F>(
+    predicate: (value: T) => value is U,
+    onFail: (value: T) => Awaitable<F>
+  ): AsyncPipeline<U, E | F | PipelineError>;
+  ensure<F>(
+    predicate: (value: T) => Awaitable<boolean>,
+    onFail: (value: T) => Awaitable<F>
+  ): AsyncPipeline<T, E | F | PipelineError>;
+  ensure<F>(
+    predicate: (value: T) => Awaitable<boolean>,
+    onFail: (value: T) => Awaitable<F>
+  ) {
+    return this._andThen(async (value) => {
+      if (await predicate(value)) {
+        return Result.ok(value);
+      }
+
+      return Result.err(await onFail(value));
+    });
+  }
+
+  /**
    * Runs multiple mappers in parallel and returns all mapped values as a tuple.
    *
    * Any thrown exception is wrapped as `PipelineError`.
@@ -278,7 +316,7 @@ export class AsyncPipeline<T, E = never> {
    *
    * @param fn Mapper applied when the pipeline is in an error state.
    */
-  mapErr<F>(fn: (error: E | PipelineError) => F) {
+  mapError<F>(fn: (error: E | PipelineError) => F) {
     return this._orElse((error) => Result.err(fn(error)));
   }
 
