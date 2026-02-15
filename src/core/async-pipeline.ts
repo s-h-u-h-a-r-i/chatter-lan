@@ -141,6 +141,9 @@ export class AsyncPipeline<T, E = never> {
    * Starts a new pipeline from an existing `Result` or promise of `Result`.
    *
    * @param promise Initial result source.
+   * @example
+   * const pipeline = AsyncPipeline.chain(Result.ok(10));
+   * const result = await pipeline.execute();
    */
   static chain<T, E>(promise: Awaitable<Result<T, E>>) {
     return new AsyncPipeline(Promise.resolve(promise));
@@ -150,6 +153,8 @@ export class AsyncPipeline<T, E = never> {
    * Starts a successful pipeline from a plain value.
    *
    * @param value Initial success value.
+   * @example
+   * const result = await AsyncPipeline.of(21).map((n) => n * 2).execute();
    */
   static of<T>(value: T) {
     return AsyncPipeline.chain(Result.ok(value));
@@ -161,8 +166,10 @@ export class AsyncPipeline<T, E = never> {
    * Rejections are converted into `Result.err(new PipelineError(...))`.
    *
    * @param promise Promise-like value source.
+   * @example
+   * const result = await AsyncPipeline.from(Promise.resolve('ready')).execute();
    */
-  static from<T>(promise: Awaitable<T>) {
+  static from<T>(promise: PromiseLike<T>) {
     return AsyncPipeline.chain(
       Promise.resolve(promise)
         .then((value) => Result.ok(value))
@@ -174,6 +181,9 @@ export class AsyncPipeline<T, E = never> {
    * Starts a pipeline directly from an existing `Result` source.
    *
    * @param result Result or promise of result.
+   * @example
+   * const existing = Result.ok({ id: 1 });
+   * const result = await AsyncPipeline.fromResult(existing).execute();
    */
   static fromResult<T, E>(result: Awaitable<Result<T, E>>) {
     return AsyncPipeline.chain(result);
@@ -183,6 +193,8 @@ export class AsyncPipeline<T, E = never> {
    * Transforms the success value synchronously.
    *
    * @param fn Mapper applied when the pipeline is successful.
+   * @example
+   * const result = await AsyncPipeline.of(3).map((n) => n + 1).execute();
    */
   map<U>(fn: (value: T) => U) {
     return this._andThen((value) => Result.ok(fn(value)));
@@ -192,6 +204,10 @@ export class AsyncPipeline<T, E = never> {
    * Chains the pipeline with an async or sync result-producing function.
    *
    * @param fn Function that returns the next `Result`.
+   * @example
+   * const result = await AsyncPipeline.of('42')
+   *   .andThen((value) => Result.ok(Number(value)))
+   *   .execute();
    */
   andThen<U, F>(fn: (value: T) => Awaitable<Result<U, F>>) {
     return this._andThen(fn);
@@ -285,6 +301,10 @@ export class AsyncPipeline<T, E = never> {
    * Runs a side effect for a success value without changing that value.
    *
    * @param fn Side-effect function executed on success.
+   * @example
+   * const result = await AsyncPipeline.of('hello')
+   *   .tap((value) => console.log(value))
+   *   .execute();
    */
   tap(fn: (value: T) => Awaitable<void>) {
     return this._andThen(async (value) => {
@@ -458,6 +478,10 @@ export class AsyncPipeline<T, E = never> {
    * the result of `other` and return both success values as `[left, right]`.
    *
    * @param other Another pipeline or result source to combine with.
+   * @example
+   * const left = AsyncPipeline.of(2);
+   * const right = AsyncPipeline.of(3);
+   * const result = await left.zip(right).execute();
    */
   zip<U, F>(
     other: AsyncPipeline<U, F> | Awaitable<Result<U, F>>
@@ -476,6 +500,10 @@ export class AsyncPipeline<T, E = never> {
    * Recovers from an error by mapping it to a fallback success value.
    *
    * @param fn Recovery function producing a replacement value.
+   * @example
+   * const result = await AsyncPipeline.from(Promise.reject('boom'))
+   *   .recover(() => 'fallback')
+   *   .execute();
    */
   recover(fn: (error: E | PipelineError) => Awaitable<T>) {
     return this._orElse(async (error) => Result.ok(await fn(error)));
@@ -503,6 +531,10 @@ export class AsyncPipeline<T, E = never> {
    * Runs an error side effect without changing the failure value.
    *
    * @param fn Side-effect function executed on error.
+   * @example
+   * const result = await AsyncPipeline.chain<string, string>(Result.err('Oops'))
+   *   .tapError((error) => console.error(error))
+   *   .execute();
    */
   tapError(fn: (error: E | PipelineError) => Awaitable<void>) {
     return this._orElse(async (error) => {
@@ -515,6 +547,10 @@ export class AsyncPipeline<T, E = never> {
    * Transforms an error value without recovering to success.
    *
    * @param fn Mapper applied when the pipeline is in an error state.
+   * @example
+   * const result = await AsyncPipeline.chain<string, string>(Result.err('Oops'))
+   *   .mapError((error) => ({ code: 'PIPELINE_ERROR', error }))
+   *   .execute();
    */
   mapError<F>(fn: (error: E | PipelineError) => Awaitable<F>) {
     return this._orElse(async (error) => Result.err(await fn(error)));
@@ -524,6 +560,10 @@ export class AsyncPipeline<T, E = never> {
    * Converts any pipeline error into a predefined success fallback.
    *
    * @param fallback Value returned when an error occurs.
+   * @example
+   * const value = await AsyncPipeline.from(Promise.reject('offline'))
+   *   .ignoreError('default')
+   *   .getOrElse(() => 'unused');
    */
   ignoreError(fallback: T) {
     return this.recover(() => fallback);
@@ -533,6 +573,9 @@ export class AsyncPipeline<T, E = never> {
    * Resolves the pipeline into a value by providing a fallback for errors.
    *
    * @param onError Fallback factory called when the pipeline is in an error state.
+   * @example
+   * const value = await AsyncPipeline.chain<number, string>(Result.err('bad'))
+   *   .getOrElse(() => 0);
    */
   async getOrElse(onError: (error: E | PipelineError) => Awaitable<T>) {
     const result = await this.execute();
@@ -545,6 +588,11 @@ export class AsyncPipeline<T, E = never> {
    *
    * @param onSuccess Mapper called when the pipeline succeeds.
    * @param onError Mapper called when the pipeline fails.
+   * @example
+   * const text = await AsyncPipeline.of(5).fold(
+   *   (value) => `value=${value}`,
+   *   (error) => `error=${String(error)}`
+   * );
    */
   async fold<U>(
     onSuccess: (value: T) => Awaitable<U>,
@@ -559,6 +607,9 @@ export class AsyncPipeline<T, E = never> {
    * Resolves the pipeline and returns its final `Result`.
    *
    * Any thrown exception from internal execution is wrapped in `PipelineError`.
+   *
+   * @example
+   * const result = await AsyncPipeline.of('done').execute();
    */
   async execute(): Promise<Result<T, E | PipelineError>> {
     try {
