@@ -104,7 +104,7 @@ export class AsyncPipeline<T, E = never> {
    *
    * @param promise Initial result source.
    */
-  static chain<T, E = never>(promise: Awaitable<Result<T, E>>) {
+  static chain<T, E>(promise: Awaitable<Result<T, E>>) {
     return new AsyncPipeline(Promise.resolve(promise));
   }
 
@@ -155,7 +155,7 @@ export class AsyncPipeline<T, E = never> {
    *
    * @param fn Function that returns the next `Result`.
    */
-  flatMap<U, F = never>(fn: (value: T) => Awaitable<Result<U, F>>) {
+  flatMap<U, F>(fn: (value: T) => Awaitable<Result<U, F>>) {
     return this._andThen(fn);
   }
 
@@ -271,6 +271,29 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
+   * Combines this pipeline with another result source into a tuple.
+   *
+   * The current pipeline is awaited first for its result, but note that `other`
+   * (if provided as an existing AsyncPipeline or a Promise) may already be executing
+   * or resolved in the background. Only after the current pipeline succeeds do we await
+   * the result of `other` and return both success values as `[left, right]`.
+   *
+   * @param other Another pipeline or result source to combine with.
+   */
+  zip<U, F>(
+    other: AsyncPipeline<U, F> | Awaitable<Result<U, F>>
+  ): AsyncPipeline<[T, U], E | F | PipelineError> {
+    const otherPromise =
+      other instanceof AsyncPipeline ? other.promise : Promise.resolve(other);
+
+    return this._andThen(async (left) => {
+      const right = await otherPromise;
+      if (Result.isErr(right)) return right;
+      return Result.ok([left, right.value]);
+    });
+  }
+
+  /**
    * Recovers from an error by mapping it to a fallback success value.
    *
    * @param fn Recovery function producing a replacement value.
@@ -293,9 +316,7 @@ export class AsyncPipeline<T, E = never> {
    *   })
    *   .execute();
    */
-  recoverWith<F = never>(
-    fn: (error: E | PipelineError) => Awaitable<Result<T, F>>
-  ) {
+  recoverWith<F>(fn: (error: E | PipelineError) => Awaitable<Result<T, F>>) {
     return this._orElse(fn);
   }
 
@@ -316,8 +337,8 @@ export class AsyncPipeline<T, E = never> {
    *
    * @param fn Mapper applied when the pipeline is in an error state.
    */
-  mapError<F>(fn: (error: E | PipelineError) => F) {
-    return this._orElse((error) => Result.err(fn(error)));
+  mapError<F>(fn: (error: E | PipelineError) => Awaitable<F>) {
+    return this._orElse(async (error) => Result.err(await fn(error)));
   }
 
   /**
@@ -368,7 +389,7 @@ export class AsyncPipeline<T, E = never> {
     }
   }
 
-  private _andThen<U, F = never>(
+  private _andThen<U, F>(
     fn: (value: T) => Awaitable<Result<U, F>>
   ): AsyncPipeline<U, E | F | PipelineError> {
     return AsyncPipeline.chain(
@@ -385,7 +406,7 @@ export class AsyncPipeline<T, E = never> {
     );
   }
 
-  private _orElse<F = never>(
+  private _orElse<F>(
     fn: (error: E | PipelineError) => Awaitable<Result<T, F>>
   ): AsyncPipeline<T, F | PipelineError> {
     return AsyncPipeline.chain(
