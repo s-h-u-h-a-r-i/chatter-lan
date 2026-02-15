@@ -330,6 +330,17 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
+   * Resolves the pipeline into a value by providing a fallback for errors.
+   *
+   * @param onError Fallback factory called when the pipeline is in an error state.
+   */
+  async getOrElse(onError: (error: E | PipelineError) => Awaitable<T>) {
+    const result = await this.execute();
+    if (Result.isOk(result)) return result.value;
+    return onError(result.error);
+  }
+
+  /**
    * Resolves the pipeline and returns its final `Result`.
    *
    * Any thrown exception from internal execution is wrapped in `PipelineError`.
