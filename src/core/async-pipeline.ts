@@ -1,22 +1,7 @@
 type Awaitable<T> = T | PromiseLike<T>;
 
-/**
- * Successful result container.
- *
- * Use this when returning success values in `Result`-based APIs.
- */
-export class Ok<T> {
-  constructor(readonly value: T) {}
-}
-
-/**
- * Failed result container.
- *
- * Use this when returning failure values in `Result`-based APIs.
- */
-export class Err<E> {
-  constructor(readonly error: E) {}
-}
+export type Ok<T> = { ok: true; value: T };
+export type Err<E> = { ok: false; error: E };
 
 /**
  * Discriminated result type used across the async pipeline API.
@@ -52,25 +37,25 @@ export const Result = {
    *
    * @param value Value to wrap in `Ok`.
    */
-  ok: <T>(value: T): Result<T, never> => new Ok(value),
+  ok: <T>(value: T): Result<T, never> => ({ ok: true, value }),
   /**
    * Creates a failed result.
    *
    * @param error Error value to wrap in `Err`.
    */
-  err: <E>(error: E): Result<never, E> => new Err(error),
+  err: <E>(error: E): Result<never, E> => ({ ok: false, error }),
   /**
    * Returns `true` when the result is `Ok`.
    *
    * @param result Result value to test.
    */
-  isOk: <T, E>(result: Result<T, E>) => result instanceof Ok,
+  isOk: <T, E>(result: Result<T, E>) => result.ok === true,
   /**
    * Returns `true` when the result is `Err`.
    *
    * @param result Result value to test.
    */
-  isErr: <T, E>(result: Result<T, E>) => result instanceof Err,
+  isErr: <T, E>(result: Result<T, E>) => result.ok === false,
 };
 
 /**
