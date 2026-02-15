@@ -329,6 +329,41 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
+   * Traverses a success array by running a result-producing function per item.
+   *
+   * Iteration is sequential and stops at the first `Err`. If all items succeed,
+   * returns an array of mapped values in the same order.
+   *
+   * @param fn Function executed for each item in the success array.
+   * @example
+   * const result = await AsyncPipeline.of(['a', 'bb'])
+   *   .traverse((value) =>
+   *     value.length > 0 ? Result.ok(value.length) : Result.err('Empty')
+   *   )
+   *   .execute();
+   */
+  traverse<Item, U, F>(
+    this: AsyncPipeline<readonly Item[], E>,
+    fn: (
+      value: Item,
+      index: number,
+      items: readonly Item[]
+    ) => Awaitable<Result<U, F>>
+  ) {
+    return this._andThen(async (items) => {
+      const values: U[] = [];
+
+      for (const [index, item] of items.entries()) {
+        const result = await fn(item, index, items);
+        if (Result.isErr(result)) return result;
+        values.push(result.value);
+      }
+
+      return Result.ok(values);
+    });
+  }
+
+  /**
    * Runs multiple result-producing functions in parallel.
    *
    * Returns the first `Err` encountered in completion order of the collected
