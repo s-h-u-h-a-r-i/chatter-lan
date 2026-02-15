@@ -568,6 +568,27 @@ export class AsyncPipeline<T, E = never> {
     }
   }
 
+  /**
+   * Resolves the pipeline and maps any failure into a custom error type.
+   *
+   * This is useful when callers want a single application-wide error contract
+   * (for example, an error object that always has a `code` property).
+   *
+   * @param mapError Mapper that normalizes pipeline failures.
+   */
+  async executeAs<F>(
+    mapError: (error: E | PipelineError) => Awaitable<F>
+  ): Promise<Result<T, F>> {
+    try {
+      const result = await this.promise;
+      if (Result.isOk(result)) return result;
+
+      return Result.err(await mapError(result.error));
+    } catch (err) {
+      return Result.err(await mapError(new PipelineError(err)));
+    }
+  }
+
   private _andThen<U, F>(
     fn: (value: T) => Awaitable<Result<U, F>>
   ): AsyncPipeline<Prettify<U>, E | F | PipelineError> {
