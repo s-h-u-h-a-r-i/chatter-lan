@@ -196,6 +196,43 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
+   * Runs a result-producing step and sets its success value on a field.
+   *
+   * Unlike `addField`, existing keys may be overwritten. This is useful when
+   * working with dictionary-like values (for example, `Record<string, unknown>`)
+   * where TypeScript cannot prove a string key is new.
+   *
+   * @param key Field name to set on the current success object.
+   * @param fn Result-producing function used to compute the field value.
+   * @example
+   * const result = await AsyncPipeline.of({ userId, role: 'guest' })
+   *   .setField('role', () => Result.ok('admin'))
+   *   .execute();
+   */
+  setField<
+    T2 extends Record<PropertyKey, unknown>,
+    K extends PropertyKey,
+    U,
+    F
+  >(
+    this: AsyncPipeline<T2, E>,
+    key: K,
+    fn: (value: T2) => Awaitable<Result<U, F>>
+  ) {
+    type Updated = Prettify<Omit<T2, K & keyof T2> & Record<K, U>>;
+
+    return this._andThen(async (value) => {
+      const result = await fn(value);
+      if (Result.isErr(result)) return result;
+
+      return Result.ok({
+        ...value,
+        [key]: result.value,
+      } as Updated);
+    });
+  }
+
+  /**
    * Runs a side effect for a success value without changing that value.
    *
    * @param fn Side-effect function executed on success.
@@ -480,14 +517,4 @@ export class AsyncPipeline<T, E = never> {
       })()
     );
   }
-}
-
-function test() {
-  return AsyncPipeline.of({ name: 'Triston' })
-    .addField('name', (ctx) => Result.ok(35))
-    .map((ctx) => ({
-      user: {
-        name: ctx.name,
-      },
-    }));
 }
