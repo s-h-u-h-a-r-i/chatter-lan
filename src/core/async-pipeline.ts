@@ -87,7 +87,7 @@ export class PipelineError extends Error {
  *
  * @example
  * const result = await AsyncPipeline.from(fetchUser(userId))
- *   .flatMap((user) => validateUser(user))
+ *   .andThen((user) => validateUser(user))
  *   .map((user) => user.profile)
  *   .recover(() => ({ displayName: 'Guest' }))
  *   .execute();
@@ -155,7 +155,7 @@ export class AsyncPipeline<T, E = never> {
    *
    * @param fn Function that returns the next `Result`.
    */
-  flatMap<U, F>(fn: (value: T) => Awaitable<Result<U, F>>) {
+  andThen<U, F>(fn: (value: T) => Awaitable<Result<U, F>>) {
     return this._andThen(fn);
   }
 
@@ -308,7 +308,7 @@ export class AsyncPipeline<T, E = never> {
    * @param fn Recovery function producing the next result.
    * @example
    * const result = await AsyncPipeline.from(readConfig())
-   *   .recoverWith((error) => {
+   *   .orElse((error) => {
    *     if (error instanceof PipelineError) {
    *       return Result.ok(defaultConfig);
    *     }
@@ -316,7 +316,7 @@ export class AsyncPipeline<T, E = never> {
    *   })
    *   .execute();
    */
-  recoverWith<F>(fn: (error: E | PipelineError) => Awaitable<Result<T, F>>) {
+  orElse<F>(fn: (error: E | PipelineError) => Awaitable<Result<T, F>>) {
     return this._orElse(fn);
   }
 
