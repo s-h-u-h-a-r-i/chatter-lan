@@ -569,24 +569,35 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
-   * Resolves the pipeline and maps any failure into a custom error type.
+   * Executes the pipeline and maps any {@link PipelineError} into a custom error type.
    *
-   * This is useful when callers want a single application-wide error contract
-   * (for example, an error object that always has a `code` property).
+   * This is useful if you want to intercept and transform unexpected exceptions
+   * (wrapped in {@link PipelineError}) to a different error type, while preserving
+   * any domain-specific error values.
    *
-   * @param mapError Mapper that normalizes pipeline failures.
+   * @template F The mapped error type for {@link PipelineError}.
+   * @param mapError Function that maps a {@link PipelineError} to an error value of type F.
+   * @returns A promise resolving to a {@link Result} containing:
+   *   - On success: an `Ok<T>`.
+   *   - On error: an `Err<E | F>` where domain errors remain as-is, and
+   *     {@link PipelineError}s are mapped to F.
+   *
+   * @example
+   * const pipeline = AsyncPipeline.from(fetchUser(userId));
+   * const result = await pipeline.executeAs((err) => 'unexpected_error');
+   * if (Result.isErr(result) && result.error === 'unexpected_error') {
+   *   // handle unexpected system error
+   * }
    */
   async executeAs<F>(
-    mapError: (error: E | PipelineError) => Awaitable<F>
-  ): Promise<Result<T, F>> {
-    try {
-      const result = await this.promise;
-      if (Result.isOk(result)) return result;
-
-      return Result.err(await mapError(result.error));
-    } catch (err) {
-      return Result.err(await mapError(new PipelineError(err)));
+    mapError: (error: PipelineError) => F
+  ): Promise<Result<T, E | F>> {
+    const res = await this.execute();
+    if (Result.isOk(res)) return res;
+    if (res.error instanceof PipelineError) {
+      return Result.err(mapError(res.error));
     }
+    return Result.err(res.error);
   }
 
   private _andThen<U, F>(
