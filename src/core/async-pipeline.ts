@@ -32,9 +32,11 @@ type ResultRecord = Record<PropertyKey, Awaitable<Result<unknown, unknown>>>;
 type ResultRecordValues<R extends ResultRecord> = {
   [K in keyof R]: R[K] extends Awaitable<Result<infer U, unknown>> ? U : never;
 };
-type ResultRecordErrors<R extends ResultRecord> = {
-  [K in keyof R]: R[K] extends Awaitable<Result<unknown, infer E>> ? E : never;
-}[keyof R];
+type UnwrapRecordErrors<R extends ResultRecord> = Awaited<
+  R[keyof R]
+> extends Result<unknown, infer E>
+  ? E
+  : never;
 
 /**
  * Helpers for creating and narrowing `Result` values.
@@ -255,7 +257,7 @@ export class AsyncPipeline<T, E = never> {
   >(this: AsyncPipeline<T2, E>, fn: (value: T2) => Awaitable<R>) {
     return this._andThen(async (value) => {
       type Values = ResultRecordValues<R>;
-      type Errors = ResultRecordErrors<R>;
+      type Errors = UnwrapRecordErrors<R>;
 
       const resultRecord = await fn(value);
       const keys = Reflect.ownKeys(resultRecord) as (keyof R)[];
@@ -275,7 +277,7 @@ export class AsyncPipeline<T, E = never> {
       return Result.ok({
         ...value,
         ...merged,
-      } as T2 & Values);
+      } as Prettify<T2 & Values>);
     });
   }
 
