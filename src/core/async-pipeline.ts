@@ -8,6 +8,7 @@ export type Err<E> = { ok: false; error: E };
  */
 export type Result<T, E> = Ok<T> | Err<E>;
 
+type Prettify<T> = { [K in keyof T]: T[K] } & {};
 type MapFn<T> = (value: T) => Awaitable<unknown>;
 type ResultFn<T> = (value: T) => Awaitable<Result<unknown, unknown>>;
 type MapParallelValues<T, Fns extends readonly MapFn<T>[]> = {
@@ -157,6 +158,41 @@ export class AsyncPipeline<T, E = never> {
    */
   andThen<U, F>(fn: (value: T) => Awaitable<Result<U, F>>) {
     return this._andThen(fn);
+  }
+
+  /**
+   * Runs a result-producing step and appends its success value as a new field.
+   *
+   * This is a convenience for the common "load something, then merge into context"
+   * pattern used with object-shaped pipeline values. Existing keys cannot be
+   * overwritten.
+   *
+   * @param key Field name to add to the current success object.
+   * @param fn Result-producing function used to compute the field value.
+   * @example
+   * const result = await AsyncPipeline.of({ userId })
+   *   .addField('profile', (ctx) => loadProfile(ctx.userId))
+   *   .execute();
+   */
+  addField<
+    T2 extends Record<PropertyKey, unknown>,
+    K extends Exclude<PropertyKey, keyof T2>,
+    U,
+    F
+  >(
+    this: AsyncPipeline<T2, E>,
+    key: K,
+    fn: (value: T2) => Awaitable<Result<U, F>>
+  ) {
+    return this._andThen(async (value) => {
+      const result = await fn(value);
+      if (Result.isErr(result)) return result;
+
+      return Result.ok({
+        ...value,
+        [key]: result.value,
+      } as T2 & Record<K, U>);
+    });
   }
 
   /**
@@ -413,7 +449,7 @@ export class AsyncPipeline<T, E = never> {
 
   private _andThen<U, F>(
     fn: (value: T) => Awaitable<Result<U, F>>
-  ): AsyncPipeline<U, E | F | PipelineError> {
+  ): AsyncPipeline<Prettify<U>, E | F | PipelineError> {
     return AsyncPipeline.chain(
       (async (): Promise<Result<U, E | F | PipelineError>> => {
         try {
@@ -444,4 +480,14 @@ export class AsyncPipeline<T, E = never> {
       })()
     );
   }
+}
+
+function test() {
+  return AsyncPipeline.of({ name: 'Triston' })
+    .addField('name', (ctx) => Result.ok(35))
+    .map((ctx) => ({
+      user: {
+        name: ctx.name,
+      },
+    }));
 }
