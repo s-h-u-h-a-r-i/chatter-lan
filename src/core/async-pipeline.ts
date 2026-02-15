@@ -341,6 +341,21 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
+   * Resolves the pipeline by mapping both success and error states to one value.
+   *
+   * @param onSuccess Mapper called when the pipeline succeeds.
+   * @param onError Mapper called when the pipeline fails.
+   */
+  async fold<U>(
+    onSuccess: (value: T) => Awaitable<U>,
+    onError: (error: E | PipelineError) => Awaitable<U>
+  ) {
+    const result = await this.execute();
+    if (Result.isOk(result)) return onSuccess(result.value);
+    return onError(result.error);
+  }
+
+  /**
    * Resolves the pipeline and returns its final `Result`.
    *
    * Any thrown exception from internal execution is wrapped in `PipelineError`.
