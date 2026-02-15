@@ -274,6 +274,15 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
+   * Transforms an error value without recovering to success.
+   *
+   * @param fn Mapper applied when the pipeline is in an error state.
+   */
+  mapErr<F>(fn: (error: E | PipelineError) => F) {
+    return this._orElse((error) => Result.err(fn(error)));
+  }
+
+  /**
    * Converts any pipeline error into a predefined success fallback.
    *
    * @param fallback Value returned when an error occurs.
