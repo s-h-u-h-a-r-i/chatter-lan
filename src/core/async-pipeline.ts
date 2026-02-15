@@ -28,6 +28,13 @@ type ParallelErrors<T, Fns extends readonly ResultFn<T>[]> = {
     ? E
     : never;
 }[number];
+type ResultRecord = Record<PropertyKey, Awaitable<Result<unknown, unknown>>>;
+type ResultRecordValues<R extends ResultRecord> = {
+  [K in keyof R]: R[K] extends Awaitable<Result<infer U, unknown>> ? U : never;
+};
+type ResultRecordErrors<R extends ResultRecord> = {
+  [K in keyof R]: R[K] extends Awaitable<Result<unknown, infer E>> ? E : never;
+}[keyof R];
 
 /**
  * Helpers for creating and narrowing `Result` values.
@@ -57,6 +64,34 @@ export const Result = {
    * @param result Result value to test.
    */
   isErr: <T, E>(result: Result<T, E>) => result.ok === false,
+  /**
+   * Wraps an async value in a `Result`, catching any thrown exceptions.
+   *
+   * If the awaited value succeeds, returns a `Result.ok` with the resolved value.
+   * If the awaited value throws, returns a `Result.err` containing a `PipelineError`
+   * that wraps the original exception.
+   *
+   * @template T The type of the resolved value.
+   * @param value An Awaitable value (a Promise or value) to resolve.
+   * @returns A Promise that resolves to a `Result` of the awaited value or a `PipelineError`.
+   *
+   * @example
+   * const result = await Result.fromAsync(fetchSomeResource());
+   * if (Result.isOk(result)) {
+   *   // handle success
+   * } else {
+   *   // handle error (result.error is PipelineError)
+   * }
+   */
+  fromAsync: async <T>(
+    value: Awaitable<T>
+  ): Promise<Result<T, PipelineError>> => {
+    try {
+      return Result.ok(await value);
+    } catch (err) {
+      return Result.err(new PipelineError(err));
+    }
+  },
 };
 
 /**
@@ -161,13 +196,13 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
-   * Runs a result-producing step and appends its success value as a new field.
+   * Runs a result-producing step and stores its success value on a field.
    *
    * This is a convenience for the common "load something, then merge into context"
-   * pattern used with object-shaped pipeline values. Existing keys cannot be
+   * pattern used with object-shaped pipeline values. Existing keys may be
    * overwritten.
    *
-   * @param key Field name to add to the current success object.
+   * @param key Field name to set on the current success object.
    * @param fn Result-producing function used to compute the field value.
    * @example
    * const result = await AsyncPipeline.of({ userId })
@@ -175,41 +210,6 @@ export class AsyncPipeline<T, E = never> {
    *   .execute();
    */
   addField<
-    T2 extends Record<PropertyKey, unknown>,
-    K extends Exclude<PropertyKey, keyof T2>,
-    U,
-    F
-  >(
-    this: AsyncPipeline<T2, E>,
-    key: K,
-    fn: (value: T2) => Awaitable<Result<U, F>>
-  ) {
-    return this._andThen(async (value) => {
-      const result = await fn(value);
-      if (Result.isErr(result)) return result;
-
-      return Result.ok({
-        ...value,
-        [key]: result.value,
-      } as T2 & Record<K, U>);
-    });
-  }
-
-  /**
-   * Runs a result-producing step and sets its success value on a field.
-   *
-   * Unlike `addField`, existing keys may be overwritten. This is useful when
-   * working with dictionary-like values (for example, `Record<string, unknown>`)
-   * where TypeScript cannot prove a string key is new.
-   *
-   * @param key Field name to set on the current success object.
-   * @param fn Result-producing function used to compute the field value.
-   * @example
-   * const result = await AsyncPipeline.of({ userId, role: 'guest' })
-   *   .setField('role', () => Result.ok('admin'))
-   *   .execute();
-   */
-  setField<
     T2 extends Record<PropertyKey, unknown>,
     K extends PropertyKey,
     U,
@@ -229,6 +229,53 @@ export class AsyncPipeline<T, E = never> {
         ...value,
         [key]: result.value,
       } as Updated);
+    });
+  }
+
+  /**
+   * Runs multiple result sources in parallel and merges successful values by key.
+   *
+   * The callback returns an object whose values are `Result` sources. All fields are
+   * awaited concurrently. If any field resolves to `Err`, the pipeline fails with
+   * that error. On success, all mapped values are merged into the current object,
+   * overwriting existing keys when names collide.
+   *
+   * @param fn Factory that returns named result sources for concurrent execution.
+   * @example
+   * const result = await AsyncPipeline.of({ repository, userData })
+   *   .addFieldsParallel(({ repository, userData }) => ({
+   *     theme: repository.getTheme(userData.id),
+   *     locale: repository.getLocale(userData.id),
+   *   }))
+   *   .execute();
+   */
+  addFieldsParallel<
+    T2 extends Record<PropertyKey, unknown>,
+    R extends ResultRecord
+  >(this: AsyncPipeline<T2, E>, fn: (value: T2) => Awaitable<R>) {
+    return this._andThen(async (value) => {
+      type Values = ResultRecordValues<R>;
+      type Errors = ResultRecordErrors<R>;
+
+      const resultRecord = await fn(value);
+      const keys = Reflect.ownKeys(resultRecord) as (keyof R)[];
+      const pairs = await Promise.all(
+        keys.map(async (key) => [key, await resultRecord[key]] as const)
+      );
+
+      const merged = {} as Values;
+      for (const [key, result] of pairs) {
+        if (Result.isErr(result)) {
+          return result as Result<never, Errors>;
+        }
+
+        (merged as Record<PropertyKey, unknown>)[key] = result.value;
+      }
+
+      return Result.ok({
+        ...value,
+        ...merged,
+      } as T2 & Values);
     });
   }
 
