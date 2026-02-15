@@ -172,6 +172,28 @@ export class AsyncPipeline<T, E = never> {
   }
 
   /**
+   * Runs a result-producing side effect without changing the success value.
+   *
+   * When `fn` returns `Ok`, the original value continues through the pipeline.
+   * When `fn` returns `Err`, the pipeline switches to that error.
+   *
+   * @param fn Side-effect function that can fail with a `Result.err`.
+   * @example
+   * const result = await AsyncPipeline.of('hello')
+   *   .flatTap((value) =>
+   *     value.length > 3 ? Result.ok(undefined) : Result.err('Too short')
+   *   )
+   *   .execute();
+   */
+  flatTap<U, F>(fn: (value: T) => Awaitable<Result<U, F>>) {
+    return this._andThen(async (value) => {
+      const result = await fn(value);
+      if (Result.isErr(result)) return result;
+      return Result.ok(value);
+    });
+  }
+
+  /**
    * Validates the success value with a predicate.
    *
    * When the predicate returns `true`, the current value continues through the
