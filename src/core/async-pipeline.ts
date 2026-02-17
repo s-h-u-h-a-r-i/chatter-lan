@@ -47,13 +47,13 @@ export const Result = {
    *
    * @param value Value to wrap in `Ok`.
    */
-  ok: <T>(value: T): Result<T, never> => ({ ok: true, value }),
+  ok: <const T>(value: T): Result<T, never> => ({ ok: true, value }),
   /**
    * Creates a failed result.
    *
    * @param error Error value to wrap in `Err`.
    */
-  err: <E>(error: E): Result<never, E> => ({ ok: false, error }),
+  err: <const E>(error: E): Result<never, E> => ({ ok: false, error }),
   /**
    * Returns `true` when the result is `Ok`.
    *
@@ -156,7 +156,7 @@ export class AsyncPipeline<T, E = never> {
    * @example
    * const result = await AsyncPipeline.of(21).map((n) => n * 2).execute();
    */
-  static of<T>(value: T) {
+  static of<const T>(value: T) {
     return AsyncPipeline.chain(Result.ok(value));
   }
 
@@ -229,7 +229,7 @@ export class AsyncPipeline<T, E = never> {
    */
   addField<
     T2 extends Record<PropertyKey, unknown>,
-    K extends PropertyKey,
+    const K extends PropertyKey,
     U,
     F
   >(
@@ -269,7 +269,7 @@ export class AsyncPipeline<T, E = never> {
    */
   addFieldsParallel<
     T2 extends Record<PropertyKey, unknown>,
-    R extends ResultRecord
+    const R extends ResultRecord
   >(this: AsyncPipeline<T2, E>, fn: (value: T2) => Awaitable<R>) {
     return this._andThen(async (value) => {
       type Values = ResultRecordValues<R>;
