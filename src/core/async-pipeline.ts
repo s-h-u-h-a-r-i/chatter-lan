@@ -9,6 +9,7 @@ export type Err<E> = { ok: false; error: E };
 export type Result<T, E> = Ok<T> | Err<E>;
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
+type WithoutPipelineError<E> = Exclude<E, PipelineError>;
 type MapFn<T> = (value: T) => Awaitable<unknown>;
 type ResultFn<T> = (value: T) => Awaitable<Result<unknown, unknown>>;
 type MapParallelValues<T, Fns extends readonly MapFn<T>[]> = {
@@ -566,7 +567,16 @@ export class AsyncPipeline<T, E = never> {
    *   .getOrElse(() => 'unused');
    */
   ignoreError(fallback: T) {
-    return this.recover(() => fallback);
+    return AsyncPipeline.chain(
+      (async () => {
+        try {
+          const result = await this.promise;
+          return Result.isOk(result) ? result : Result.ok(fallback);
+        } catch {
+          return Result.ok(fallback);
+        }
+      })()
+    );
   }
 
   /**
@@ -642,13 +652,13 @@ export class AsyncPipeline<T, E = never> {
    */
   async executeAs<F>(
     mapError: (error: PipelineError) => F
-  ): Promise<Result<T, E | F>> {
+  ): Promise<Result<T, WithoutPipelineError<E> | F>> {
     const res = await this.execute();
     if (Result.isOk(res)) return res;
     if (res.error instanceof PipelineError) {
       return Result.err(mapError(res.error));
     }
-    return Result.err(res.error);
+    return Result.err(res.error as WithoutPipelineError<E>);
   }
 
   private _andThen<U, F>(
