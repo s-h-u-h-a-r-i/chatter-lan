@@ -105,6 +105,8 @@ export const Result = {
  */
 export class PipelineError extends Error {
   override readonly cause?: unknown;
+  /** Internal unique flag for nominal typing. */
+  readonly __pipelineErrorVoid: void = undefined as void;
 
   constructor(cause?: unknown, message?: string) {
     super(message ?? (cause instanceof Error ? cause.message : undefined));
