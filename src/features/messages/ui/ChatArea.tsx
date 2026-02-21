@@ -1,21 +1,25 @@
 import {
   Component,
   createMemo,
-  createResource,
+  createSignal,
   For,
   Show,
   Suspense,
 } from 'solid-js';
 
 import { useCryptoService } from '@/core/crypto';
-import { useRoomsStore } from '@/features/rooms';
-import { RoomData } from '@/features/rooms/room.types';
+import { RoomData, useRoomsStore } from '@/features/rooms';
 import { useUserStore } from '@/features/user';
-import { Info, Menu, MessageCircle } from '@/ui/icons';
-import { decryptMessageContent } from '../message.crypto';
+import { Info, Menu, MessageCircle, Send } from '@/ui/icons';
+import { TextInput } from '@/ui/inputs';
 import { useRoomMessagesStore } from '../room-messages.store';
 import { MessageData } from '../schemas';
 import styles from './ChatArea.module.css';
+
+type FormSubmitEvent = SubmitEvent & {
+  currentTarget: HTMLFormElement;
+  target: Element;
+};
 
 export const ChatArea: Component<{
   onToggleRoomsSidebar(): void;
@@ -24,6 +28,10 @@ export const ChatArea: Component<{
   const roomsStore = useRoomsStore();
   const userStore = useUserStore();
   const roomMessagesStore = useRoomMessagesStore();
+
+  const [inputValue, setInputValue] = createSignal('');
+
+  const trimmedInputValue = createMemo(() => inputValue().trim());
 
   const placeHolderMessages = createMemo(() => {
     const userId = userStore.uid();
@@ -41,6 +49,16 @@ export const ChatArea: Component<{
       } satisfies MessageData;
     });
   });
+
+  let inputRef: HTMLInputElement | undefined;
+
+  const handleSubmit = async (e: FormSubmitEvent) => {
+    e.preventDefault();
+    const trimmed = trimmedInputValue();
+    if (!trimmed) return;
+    console.log(`TODO: create new message.`, trimmed);
+    setInputValue('');
+  };
 
   return (
     <div class={styles.container}>
@@ -100,6 +118,25 @@ export const ChatArea: Component<{
           </>
         )}
       </Show>
+
+      <form class={styles.inputArea} onSubmit={handleSubmit}>
+        <TextInput
+          ref={inputRef}
+          name="chat-message"
+          value={inputValue()}
+          placeholder="Type your message…"
+          disabled={false}
+          hasError={false}
+          onInput={setInputValue}
+        />
+        <button
+          type="submit"
+          title="Send message"
+          class={styles.sendButton}
+          disabled={!trimmedInputValue()}>
+          <Send size={18} strokeWidth={2} />
+        </button>
+      </form>
     </div>
   );
 };
@@ -111,15 +148,15 @@ const Message: Component<{
 }> = (props) => {
   const cryptoService = useCryptoService();
 
-  const [decryptedContent] = createResource(
-    () => ({
-      roomId: props.room.id,
-      cryptoService: cryptoService,
-      encryptedContent: props.message.encryptedContent,
-      roomSalt: props.room.salt,
-    }),
-    (params) => decryptMessageContent(params)
-  );
+  // const [decryptedContent] = createResource(
+  //   () => ({
+  //     roomId: props.room.id,
+  //     cryptoService: cryptoService,
+  //     encryptedContent: props.message.encryptedContent,
+  //     roomSalt: props.room.salt,
+  //   }),
+  //   (params) => decryptMessageContent(params)
+  // );
 
   return (
     <div

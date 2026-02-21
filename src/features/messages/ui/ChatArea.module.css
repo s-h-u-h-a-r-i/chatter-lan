@@ -232,3 +232,49 @@
   text-align: right;
   letter-spacing: 0.02em;
 }
+
+.inputArea {
+  padding: 1.25rem 1.75rem;
+  border-top: 1px solid rgba(var(--color-surface-rgb), 0.3);
+  display: flex;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -2px 12px rgba(var(--color-text-primary-rgb), 0.03);
+}
+
+.sendButton {
+  width: 48px;
+  height: 48px;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-soft) 0%,
+    rgba(var(--color-accent-soft-rgb), 0.85) 100%
+  );
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(var(--color-accent-soft-rgb), 0.3);
+
+  &:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(var(--color-accent-soft-rgb), 0.4);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
