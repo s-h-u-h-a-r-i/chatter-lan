@@ -2,16 +2,16 @@ import {
   collection,
   CollectionReference,
   doc,
+  DocumentChange,
   onSnapshot,
-  QueryDocumentSnapshot,
   serverTimestamp,
   setDoc,
-  Timestamp,
   Unsubscribe,
 } from 'firebase/firestore';
+import * as z from 'zod';
 
 import { firestore, fsPaths } from '@/core/firebase';
-import { RoomData } from './room.types';
+import { RoomData, RoomDataFirestoreSchema } from './schemas';
 
 export async function createRoom(params: {
   roomId: string;
@@ -50,11 +50,11 @@ export function subscribeToRooms(
         switch (change.type) {
           case 'added':
           case 'modified': {
-            try {
-              const converted = _toRoomData(change.doc);
-              roomsToUpsert.push(converted);
-            } catch (error) {
-              console.warn('Failed to convert room:', error);
+            const upsertResult = _handleUpsertChange(change);
+            if (upsertResult.instruction === 'remove') {
+              roomsToRemove.push(upsertResult.id);
+            } else {
+              roomsToUpsert.push(upsertResult.data);
             }
             break;
           }
@@ -81,41 +81,22 @@ function _getRoomsCollectionRef(ip: string): CollectionReference {
   return collection(firestore, fsPaths.rooms.ips.collection(ip).path);
 }
 
-function _toRoomData(docSnap: QueryDocumentSnapshot): RoomData {
-  const data = docSnap.data();
+function _handleUpsertChange(change: DocumentChange) {
+  const parsed = RoomDataFirestoreSchema.safeParse(change.doc.data());
 
-  if (typeof data.name !== 'string') {
-    throw new Error(`Invalid data in room '${docSnap.ref.path}'`);
+  if (parsed.error) {
+    console.warn('Failed to parse room doc:', {
+      id: change.doc.id,
+      issues: z.prettifyError(parsed.error),
+    });
+    return { instruction: 'remove' as const, id: change.doc.id };
   }
 
-  if (!(data.createdAt instanceof Timestamp)) {
-    throw new Error(
-      `Invalid or missing 'createdAt' in room '${docSnap.ref.path}'`
-    );
-  }
-
-  if (typeof data.salt !== 'string') {
-    throw new Error(`Invalid or missing 'salt' in room '${docSnap.ref.path}'`);
-  }
-
-  if (typeof data.verificationToken !== 'string') {
-    throw new Error(
-      `Invalid or missing 'verificationToken' in room '${docSnap.ref.path}'`
-    );
-  }
-
-  if (typeof data.verificationIV !== 'string') {
-    throw new Error(
-      `Invalid or missing 'verificationIV' in room '${docSnap.ref.path}'`
-    );
-  }
-
-  return {
-    id: docSnap.id,
-    name: data.name,
-    createdAt: data.createdAt.toDate(),
-    salt: data.salt,
-    verificationIV: data.verificationIV,
-    verificationToken: data.verificationToken,
+  const finalData: RoomData = {
+    ...parsed.data,
+    id: change.doc.id,
+    createdAt: parsed.data.createdAt.toDate(),
   };
+
+  return { instruction: 'upsert' as const, data: finalData };
 }

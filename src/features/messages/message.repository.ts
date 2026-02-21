@@ -60,6 +60,7 @@ export function subscribeToMessages(params: {
             messagesToRemove.push(change.doc.id);
             break;
           default:
+            const _exhaustiveCheck: never = change.type;
             console.warn(`New change type (${change.type}) added?`);
             break;
         }

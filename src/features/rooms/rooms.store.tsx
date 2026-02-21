@@ -14,7 +14,7 @@ import { useCryptoService } from '@/core/crypto';
 import { FirestoreSubscriptionManager } from '@/core/firebase';
 import { useUserStore } from '../user';
 import * as roomRepo from './room.repository';
-import { RoomData } from './room.types';
+import { RoomData } from './schemas';
 
 // #region Types & Constants
 
@@ -37,10 +37,10 @@ const RoomsStoreContext = createContext<RoomsStore>();
 
 // #region Provider Component
 
-const RoomsStoreProvider: ParentComponent = (props) => {
+export const RoomsStoreProvider: ParentComponent = (props) => {
   const userStore = useUserStore();
   const cryptoService = useCryptoService();
-  const roomsSubscription = useRoomsSubscription(userStore.ip);
+  const roomsSubscription = _useRoomsSubscription(userStore.ip);
 
   const [rawSelectedRoomId, setRawSelectedRoomId] = createSignal<string | null>(
     null
@@ -94,7 +94,7 @@ const RoomsStoreProvider: ParentComponent = (props) => {
   );
 };
 
-function useRoomsStore() {
+export function useRoomsStore() {
   const context = useContext(RoomsStoreContext);
   if (!context) {
     throw new Error('useRoomsStore must be used within a RoomsStoreProvider');
@@ -104,11 +104,9 @@ function useRoomsStore() {
 
 // #endregion Provider Component
 
-export { RoomsStoreProvider, useRoomsStore };
-
 // #region Rooms Subscription Hook
 
-function useRoomsSubscription(ipAccessor: Accessor<string>) {
+function _useRoomsSubscription(ipAccessor: Accessor<string>) {
   const subscriptions = new FirestoreSubscriptionManager();
 
   const [rooms, setRooms] = createSignal<RoomData[]>([]);
@@ -128,8 +126,8 @@ function useRoomsSubscription(ipAccessor: Accessor<string>) {
       ROOMS_SUBSCRIPTION_KEY,
       roomRepo.subscribeToRooms(
         ip,
-        createRoomUpsertHandler(setRooms),
-        createRoomRemoveHandler(setRooms),
+        _createRoomUpsertHandler(setRooms),
+        _createRoomRemoveHandler(setRooms),
         (err) => setError(err)
       )
     );
@@ -148,7 +146,7 @@ function useRoomsSubscription(ipAccessor: Accessor<string>) {
 
 // #region Subscription Handlers
 
-function createRoomUpsertHandler(setRooms: Setter<RoomData[]>) {
+function _createRoomUpsertHandler(setRooms: Setter<RoomData[]>) {
   return (incoming: RoomData[]) => {
     setRooms((prev) => {
       const map = new Map(prev.map((r) => [r.id, r]));
@@ -158,7 +156,7 @@ function createRoomUpsertHandler(setRooms: Setter<RoomData[]>) {
   };
 }
 
-function createRoomRemoveHandler(setRooms: Setter<RoomData[]>) {
+function _createRoomRemoveHandler(setRooms: Setter<RoomData[]>) {
   return (roomIds: string[]) => {
     setRooms((prev) => prev.filter((r) => !roomIds.includes(r.id)));
   };
