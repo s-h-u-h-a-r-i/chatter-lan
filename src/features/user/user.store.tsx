@@ -150,7 +150,7 @@ function useAuth() {
 function useIp() {
   const [ip, setIp] = createSignal<string | undefined>();
   const [ipConsentGiven, setIpConsentGiven] = createSignal(
-    storage.getIpConsent()
+    storage.getIpConsent(),
   );
   const [ipError, setIpError] = createSignal<string | null>(null);
 
@@ -164,12 +164,12 @@ function useIp() {
       } catch (error) {
         console.error('Failed to auto-fetch IP:', error);
         setIpError(
-          error instanceof Error ? error.message : 'Failed to fetch IP'
+          error instanceof Error ? error.message : 'Failed to fetch IP',
         );
         setIpConsentGiven(false);
         storage.setIpConsent(false);
       }
-    }
+    },
   );
 
   const handleIpSubmit = async (manualIp?: string) => {

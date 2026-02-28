@@ -37,7 +37,7 @@ export const RoomMessagesStoreProvider: ParentComponent = (props) => {
 
   createEffect(() => {
     const roomId = roomsStore.selectedRoomId();
-    const ip = userStore.ip(); // guaranteed non-null by parent provider guard
+    const ip = userStore.ip();
 
     if (!roomId) return;
 
@@ -78,7 +78,7 @@ export function useRoomMessagesStore() {
   const context = useContext(RoomMessagesStoreContext);
   if (!context) {
     throw new Error(
-      'useRoomMessagesStore must be used within a RoomMessagesStoreProvider'
+      'useRoomMessagesStore must be used within a RoomMessagesStoreProvider',
     );
   }
   return context;
@@ -90,11 +90,14 @@ export function useRoomMessagesStore() {
 
 function _mergeMessages(
   prev: MessageData[],
-  incoming: MessageData[]
+  incoming: MessageData[],
 ): MessageData[] {
   const map = new Map(prev.map((m) => [m.id, m]));
-  incoming.forEach((m) => map.set(m.id, m));
+  incoming.forEach((m) => {
+    map.set(m.id, m);
+  });
+  // Sort messages in ascending order by creation time (oldest first)
   return [...map.values()].sort(
-    (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
   );
 }
