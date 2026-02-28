@@ -60,9 +60,8 @@ const _AppContent: Component = () => {
     if (!id) return null;
     return roomsStore.rooms().find((r) => r.id === id) ?? null;
   });
-  const isRoomPassphraseRequired = createMemo(() => pendingRoom() !== null);
   const isRoomLocked = createMemo(
-    () => isCheckingRoomAccess() || isRoomPassphraseRequired(),
+    () => isCheckingRoomAccess() || pendingRoom() !== null,
   );
 
   const handleToggleRoomsSidebar = () => {
