@@ -8,8 +8,10 @@ import {
   useContext,
 } from 'solid-js';
 
+import { useCryptoService } from '@/core/crypto';
 import { useRoomsStore } from '../rooms';
 import { useUserStore } from '../user';
+import { encryptMessageContent } from './message.crypto';
 import * as messageRepo from './message.repository';
 import { MessageData } from './schemas';
 
@@ -20,6 +22,7 @@ import { MessageData } from './schemas';
 interface RoomMessagesStore {
   messages: Accessor<MessageData[]>;
   error: Accessor<string | null>;
+  sendMessage(plainText: string): Promise<void>;
 }
 
 const RoomMessagesStoreContext = createContext<RoomMessagesStore>();
@@ -31,6 +34,7 @@ const RoomMessagesStoreContext = createContext<RoomMessagesStore>();
 export const RoomMessagesStoreProvider: ParentComponent = (props) => {
   const userStore = useUserStore();
   const roomsStore = useRoomsStore();
+  const cryptoService = useCryptoService();
 
   const [messages, setMessages] = createSignal<MessageData[]>([]);
   const [error, setError] = createSignal<string | null>(null);
@@ -62,9 +66,33 @@ export const RoomMessagesStoreProvider: ParentComponent = (props) => {
     });
   });
 
+  const sendMessage = async (plainText: string): Promise<void> => {
+    const room = roomsStore.selectedRoom();
+    if (!room) {
+      throw new Error('No room selected');
+    }
+
+    const encryptedContent = await encryptMessageContent({
+      roomId: room.id,
+      cryptoService,
+      plainText,
+    });
+
+    if (!encryptedContent) {
+      throw new Error('Failed to encrypt message');
+    }
+
+    await messageRepo.createMessage(userStore.ip(), room.id, {
+      encryptedContent,
+      senderId: userStore.uid(),
+      senderName: userStore.name(),
+    });
+  };
+
   const context: RoomMessagesStore = {
     messages,
     error,
+    sendMessage,
   };
 
   return (

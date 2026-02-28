@@ -56,8 +56,12 @@ export const ChatArea: Component<{
     e.preventDefault();
     const trimmed = trimmedInputValue();
     if (!trimmed) return;
-    console.log(`TODO: create new message.`, trimmed);
-    setInputValue('');
+    try {
+      await roomMessagesStore.sendMessage(trimmed);
+      setInputValue('');
+    } catch (error) {
+      console.error('Failed to send message', error);
+    }
   };
 
   return (
@@ -67,6 +71,7 @@ export const ChatArea: Component<{
           <>
             <div class={styles.header}>
               <button
+                type="button"
                 class={styles.toggleButton}
                 onClick={props.onToggleRoomsSidebar}
                 aria-label="Open rooms menu">
@@ -79,6 +84,7 @@ export const ChatArea: Component<{
                 <h2 class={styles.roomName}>{room().name}</h2>
               </div>
               <button
+                type="button"
                 class={styles.toggleButton}
                 onClick={props.onToggleInfoSidebar}
                 aria-label="Show room info">
@@ -115,28 +121,28 @@ export const ChatArea: Component<{
                 </For>
               </Show> */}
             </div>
+
+            <form class={styles.inputArea} onSubmit={handleSubmit}>
+              <TextInput
+                ref={inputRef}
+                name="chat-message"
+                value={inputValue()}
+                placeholder="Type your message…"
+                disabled={false}
+                hasError={false}
+                onInput={setInputValue}
+              />
+              <button
+                type="submit"
+                title="Send message"
+                class={styles.sendButton}
+                disabled={!trimmedInputValue()}>
+                <Send size={18} strokeWidth={2} />
+              </button>
+            </form>
           </>
         )}
       </Show>
-
-      <form class={styles.inputArea} onSubmit={handleSubmit}>
-        <TextInput
-          ref={inputRef}
-          name="chat-message"
-          value={inputValue()}
-          placeholder="Type your message…"
-          disabled={false}
-          hasError={false}
-          onInput={setInputValue}
-        />
-        <button
-          type="submit"
-          title="Send message"
-          class={styles.sendButton}
-          disabled={!trimmedInputValue()}>
-          <Send size={18} strokeWidth={2} />
-        </button>
-      </form>
     </div>
   );
 };
