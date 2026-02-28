@@ -84,10 +84,14 @@ export const ChatArea: Component<{
 
               <Show
                 when={roomMessagesStore.messages().length > 0}
-                fallback={<div>This should show nice empty room</div>}>
+                fallback={<_EmptyRoomState roomName={room().name} />}>
                 <For each={roomMessagesStore.messages()}>
                   {(message) => (
-                    <Message room={room()} message={message} uid={userStore.uid()} />
+                    <Message
+                      room={room()}
+                      message={message}
+                      uid={userStore.uid()}
+                    />
                   )}
                 </For>
               </Show>
@@ -168,3 +172,14 @@ const Message: Component<{
   );
 };
 
+const _EmptyRoomState: Component<{ roomName: string }> = (props) => (
+  <div class={styles.emptyRoomState}>
+    <div class={styles.emptyRoomIcon}>
+      <MessageCircle size={40} strokeWidth={1.75} />
+    </div>
+    <h3 class={styles.emptyRoomTitle}>No messages yet</h3>
+    <p class={styles.emptyRoomDescription}>
+      Be the first to send a message in "{props.roomName}".
+    </p>
+  </div>
+);

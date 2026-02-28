@@ -105,6 +105,38 @@
   gap: 1.25rem;
 }
 
+.emptyRoomState {
+  margin: auto;
+  width: min(100%, 420px);
+  text-align: center;
+  color: rgba(var(--color-text-primary-rgb), 0.65);
+}
+
+.emptyRoomIcon {
+  margin: 0 auto 0.75rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--color-accent-soft-rgb), 0.12);
+  color: var(--color-accent-soft);
+}
+
+.emptyRoomTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.emptyRoomDescription {
+  margin: 0.4rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
 .message {
   display: flex;
   gap: 0.75rem;
