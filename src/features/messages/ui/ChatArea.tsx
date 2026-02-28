@@ -4,10 +4,8 @@ import {
   createResource,
   createSignal,
   For,
-  Match,
   Show,
   Suspense,
-  Switch,
 } from 'solid-js';
 
 import { useCryptoService } from '@/core/crypto';
@@ -28,7 +26,6 @@ type FormSubmitEvent = SubmitEvent & {
 export const ChatArea: Component<{
   onToggleRoomsSidebar(): void;
   onToggleInfoSidebar(): void;
-  isRoomLocked: boolean;
 }> = (props) => {
   const roomsStore = useRoomsStore();
   const userStore = useUserStore();
@@ -54,89 +51,69 @@ export const ChatArea: Component<{
 
   return (
     <div class={styles.container}>
-      <Switch>
-        <Match when={!roomsStore.selectedRoom()}>
-          <_ChatState
-            title="Welcome to Chatter-Lan"
-            description="Choose a room from the sidebar to start chatting or create your own room"
-          />
-        </Match>
-
-        <Match when={props.isRoomLocked}>
-          <_ChatState
-            title="Room is locked"
-            description="Enter the room passphrase to decrypt and view messages."
-          />
-        </Match>
-
-        <Match when={roomsStore.selectedRoom()}>
-          {(room) => (
-            <>
-              <div class={styles.header}>
-                <button
-                  type="button"
-                  class={styles.toggleButton}
-                  onClick={props.onToggleRoomsSidebar}
-                  aria-label="Open rooms menu">
-                  <Menu size={20} strokeWidth={2} />
-                </button>
-                <div class={styles.headerContent}>
-                  <div class={styles.roomIcon}>
-                    <MessageCircle size={20} strokeWidth={2} />
-                  </div>
-                  <h2 class={styles.roomName}>{room().name}</h2>
+      <Show when={roomsStore.selectedRoom()}>
+        {(room) => (
+          <>
+            <div class={styles.header}>
+              <button
+                type="button"
+                class={styles.toggleButton}
+                onClick={props.onToggleRoomsSidebar}
+                aria-label="Open rooms menu">
+                <Menu size={20} strokeWidth={2} />
+              </button>
+              <div class={styles.headerContent}>
+                <div class={styles.roomIcon}>
+                  <MessageCircle size={20} strokeWidth={2} />
                 </div>
-                <button
-                  type="button"
-                  class={styles.toggleButton}
-                  onClick={props.onToggleInfoSidebar}
-                  aria-label="Show room info">
-                  <Info size={20} strokeWidth={2} />
-                </button>
+                <h2 class={styles.roomName}>{room().name}</h2>
               </div>
+              <button
+                type="button"
+                class={styles.toggleButton}
+                onClick={props.onToggleInfoSidebar}
+                aria-label="Show room info">
+                <Info size={20} strokeWidth={2} />
+              </button>
+            </div>
 
-              <div class={styles.messagesArea}>
-                <Show when={roomMessagesStore.error()}>
-                  {(error) => <div class={styles.error}>Error: {error()}</div>}
-                </Show>
+            <div class={styles.messagesArea}>
+              <Show when={roomMessagesStore.error()}>
+                {(error) => <div class={styles.error}>Error: {error()}</div>}
+              </Show>
 
-                <Show
-                  when={roomMessagesStore.messages().length > 0}
-                  fallback={<div>This should show nice empty room</div>}>
-                  <For each={roomMessagesStore.messages()}>
-                    {(message) => (
-                      <Message
-                        room={room()}
-                        message={message}
-                        uid={userStore.uid()}
-                      />
-                    )}
-                  </For>
-                </Show>
-              </div>
+              <Show
+                when={roomMessagesStore.messages().length > 0}
+                fallback={<div>This should show nice empty room</div>}>
+                <For each={roomMessagesStore.messages()}>
+                  {(message) => (
+                    <Message room={room()} message={message} uid={userStore.uid()} />
+                  )}
+                </For>
+              </Show>
+            </div>
 
-              <form class={styles.inputArea} onSubmit={handleSubmit}>
-                <TextInput
-                  ref={inputRef}
-                  name="chat-message"
-                  value={inputValue()}
-                  placeholder="Type your message…"
-                  disabled={false}
-                  hasError={false}
-                  onInput={setInputValue}
-                />
-                <button
-                  type="submit"
-                  title="Send message"
-                  class={styles.sendButton}
-                  disabled={!trimmedInputValue()}>
-                  <Send size={18} strokeWidth={2} />
-                </button>
-              </form>
-            </>
-          )}
-        </Match>
-      </Switch>
+            <form class={styles.inputArea} onSubmit={handleSubmit}>
+              <TextInput
+                ref={inputRef}
+                name="chat-message"
+                value={inputValue()}
+                placeholder="Type your message…"
+                disabled={false}
+                hasError={false}
+                onInput={setInputValue}
+              />
+              <button
+                type="submit"
+                title="Send message"
+                class={styles.sendButton}
+                disabled={!trimmedInputValue()}>
+                <Send size={18} strokeWidth={2} />
+              </button>
+            </form>
+          </>
+        )}
+      </Show>
     </div>
   );
 };
@@ -191,15 +168,3 @@ const Message: Component<{
   );
 };
 
-const _ChatState: Component<{
-  title: string;
-  description: string;
-}> = (props) => (
-  <div class={styles.emptyState}>
-    <div class={styles.emptyIcon}>
-      <MessageCircle size={64} strokeWidth={1.5} />
-    </div>
-    <h3>{props.title}</h3>
-    <p>{props.description}</p>
-  </div>
-);

@@ -1,24 +1,25 @@
 import {
   Component,
-  createEffect,
   createMemo,
-  createSignal,
   ErrorBoundary,
+  Match,
   Show,
   Suspense,
+  Switch,
+  createSignal,
 } from 'solid-js';
 
-import { CryptoServiceProvider, useCryptoService } from '@/core/crypto';
+import { CryptoServiceProvider } from '@/core/crypto';
 import { ChatArea, RoomMessagesStoreProvider } from '@/features/messages';
 import {
   InfoSidebar,
-  RoomPassphraseModal,
+  RoomPassphrasePrompt,
   RoomsListSidebar,
   RoomsStoreProvider,
   useRoomsStore,
 } from '@/features/rooms';
 import { UserStoreProvider } from '@/features/user';
-import { TriangleAlert } from '@/ui/icons';
+import { MessageCircle, TriangleAlert } from '@/ui/icons';
 import styles from './App.module.css';
 
 const App: Component = () => (
@@ -41,28 +42,16 @@ export default App;
 
 const _AppContent: Component = () => {
   const roomsStore = useRoomsStore();
-  const cryptoService = useCryptoService();
 
   const [openSidebar, setOpenSidebar] = createSignal<'rooms' | 'info' | null>(
-    null,
+    null
   );
-  const [pendingRoomId, setPendingRoomId] = createSignal<string | null>(null);
-  const [isCheckingRoomAccess, setIsCheckingRoomAccess] = createSignal(false);
 
   const isInfoSidebarOpen = () =>
     openSidebar() === 'info' && roomsStore.selectedRoom() !== null;
   const isRoomsSidebarOpen = () => {
     return openSidebar() === 'rooms' || roomsStore.selectedRoom() === null;
   };
-
-  const pendingRoom = createMemo(() => {
-    const id = pendingRoomId();
-    if (!id) return null;
-    return roomsStore.rooms().find((r) => r.id === id) ?? null;
-  });
-  const isRoomLocked = createMemo(
-    () => isCheckingRoomAccess() || pendingRoom() !== null,
-  );
 
   const handleToggleRoomsSidebar = () => {
     const isRoomsSidebarOpen = openSidebar() === 'rooms';
@@ -74,37 +63,6 @@ const _AppContent: Component = () => {
     isInfoSidebarOpen ? setOpenSidebar(null) : setOpenSidebar('info');
   };
 
-  createEffect(() => {
-    const selectedRoomId = roomsStore.selectedRoomId();
-    if (!selectedRoomId) {
-      setPendingRoomId(null);
-      setIsCheckingRoomAccess(false);
-      return;
-    }
-
-    setPendingRoomId(null);
-    setIsCheckingRoomAccess(true);
-
-    const hasSelectedRoomChanged = () =>
-      roomsStore.selectedRoomId() !== selectedRoomId;
-
-    cryptoService
-      .hasKey(selectedRoomId)
-      .then((hasKey) => {
-        if (hasSelectedRoomChanged()) return;
-        if (!hasKey) setPendingRoomId(selectedRoomId);
-      })
-      .catch((error) => {
-        if (hasSelectedRoomChanged()) return;
-        console.warn('Failed to check room key state', error);
-        setPendingRoomId(selectedRoomId);
-      })
-      .finally(() => {
-        if (hasSelectedRoomChanged()) return;
-        setIsCheckingRoomAccess(false);
-      });
-  });
-
   return (
     <div class={styles.app}>
       <Show when={isRoomsSidebarOpen() || isInfoSidebarOpen()}>
@@ -115,30 +73,52 @@ const _AppContent: Component = () => {
         isOpen={isRoomsSidebarOpen()}
         onCloseSidebar={() => setOpenSidebar(null)}
       />
-      <ChatArea
-        onToggleRoomsSidebar={handleToggleRoomsSidebar}
-        onToggleInfoSidebar={handleToggleInfoSidebar}
-        isRoomLocked={isRoomLocked()}
-      />
-      <InfoSidebar isOpen={isInfoSidebarOpen()} />
+      <main class={styles.centerPane}>
+        <Switch>
+          <Match when={roomsStore.pendingJoinRoom()}>
+            {(room) => (
+              <div class={styles.centerState}>
+                <RoomPassphrasePrompt
+                  room={room()}
+                  isSubmitting={roomsStore.isCheckingRoomAccess()}
+                  error={roomsStore.joinError()}
+                  onSubmit={(passphrase) =>
+                    roomsStore.submitPendingRoomPassphrase(passphrase)
+                  }
+                  onCancel={() => roomsStore.cancelPendingJoinRoom()}
+                />
+              </div>
+            )}
+          </Match>
 
-      <Show when={pendingRoom()}>
-        {(room) => (
-          <RoomPassphraseModal
-            room={room()}
-            onSuccess={() => {
-              setPendingRoomId(null);
-            }}
-            onCancel={() => {
-              roomsStore.selectRoomById(null);
-              setPendingRoomId(null);
-            }}
-          />
-        )}
-      </Show>
+          <Match when={!roomsStore.selectedRoom()}>
+            <_NoRoomSelectedState />
+          </Match>
+
+          <Match when={roomsStore.selectedRoom()}>
+            <ChatArea
+              onToggleRoomsSidebar={handleToggleRoomsSidebar}
+              onToggleInfoSidebar={handleToggleInfoSidebar}
+            />
+          </Match>
+        </Switch>
+      </main>
+      <InfoSidebar isOpen={isInfoSidebarOpen()} />
     </div>
   );
 };
+
+const _NoRoomSelectedState: Component = () => (
+  <div class={styles.centerState}>
+    <div class={styles.emptyIcon}>
+      <MessageCircle size={64} strokeWidth={1.5} />
+    </div>
+    <h3 class={styles.centerTitle}>Welcome to Chatter-Lan</h3>
+    <p class={styles.centerDescription}>
+      Choose a room from the sidebar to start chatting or create your own room.
+    </p>
+  </div>
+);
 
 const _AppErrorFallback: Component<{ error: unknown }> = (props) => {
   const errorString = createMemo(() =>

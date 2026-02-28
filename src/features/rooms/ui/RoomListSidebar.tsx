@@ -63,7 +63,7 @@ export const RoomsListSidebar: Component<{
                   [styles.active]: room.id === roomsStore.selectedRoom()?.id,
                 }}
                 onClick={() => {
-                  roomsStore.selectRoomById(room.id);
+                  roomsStore.requestJoinRoom(room.id);
                   props.onCloseSidebar();
                 }}>
                 <div class={styles.roomIcon}>
