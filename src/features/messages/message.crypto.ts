@@ -1,6 +1,19 @@
 import { CryptoService, EncryptedData } from '@/core/crypto';
 import { MessageEncryptedContent } from './schemas';
 
+export async function encryptMessageContent(params: {
+  roomId: string;
+  cryptoService: CryptoService;
+  plainText: string;
+}): Promise<MessageEncryptedContent | null> {
+  try {
+    return await params.cryptoService.encrypt(params.roomId, params.plainText);
+  } catch (e) {
+    console.error('Failed to encrypt message', e);
+    return null;
+  }
+}
+
 export async function decryptMessageContent(params: {
   roomId: string;
   cryptoService: CryptoService;

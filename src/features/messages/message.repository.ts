@@ -7,9 +7,9 @@ import {
   Unsubscribe,
   WithFieldValue,
 } from 'firebase/firestore';
+import z from 'zod';
 
 import { firestore, fsPaths } from '@/core/firebase';
-import z from 'zod';
 import {
   MessageData,
   MessageDataFirestore,
@@ -19,7 +19,7 @@ import {
 export async function createMessage(
   ip: string,
   roomId: string,
-  data: WithFieldValue<MessageDataFirestore>
+  data: WithFieldValue<Omit<MessageDataFirestore, 'createdAt'>>,
 ): Promise<string> {
   const messagesRef = _getMessagesCollectionRef(ip, roomId);
   const finalData = {
@@ -71,7 +71,7 @@ export function subscribeToMessages(params: {
     (error) => {
       console.error('Error subscribing to messages:', error);
       params.onError(error.message);
-    }
+    },
   );
 }
 
@@ -98,6 +98,6 @@ function _handleUpsertChange(change: DocumentChange) {
 function _getMessagesCollectionRef(ip: string, roomId: string) {
   return collection(
     firestore,
-    fsPaths.rooms.ips.collection(ip).doc(roomId).messages.path
+    fsPaths.rooms.ips.collection(ip).doc(roomId).messages.path,
   );
 }
