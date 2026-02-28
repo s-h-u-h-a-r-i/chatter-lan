@@ -3,7 +3,7 @@ import { Component, createSignal, Show } from 'solid-js';
 import { useCryptoService } from '@/core/crypto';
 import { TextInput } from '@/ui/inputs';
 import { Modal } from '@/ui/modal';
-import { RoomData } from '../room.types';
+import { RoomData } from '../schemas';
 import styles from './PassphraseModal.module.css';
 
 type FormSubmitEvent = SubmitEvent & {
@@ -31,7 +31,7 @@ export const RoomPassphraseModal: Component<{
 
     try {
       const saltBytes = Uint8Array.from(atob(props.room.salt), (c) =>
-        c.charCodeAt(0)
+        c.charCodeAt(0),
       );
       await cryptoService.init(props.room.id, passphrase(), saltBytes);
 

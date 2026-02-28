@@ -8,7 +8,7 @@ import { CreateRoomModal } from './CreateRoomModal';
 import styles from './RoomListSidebar.module.css';
 
 const Header: Component<{ setSearchTerm(searchTerm: string): void }> = (
-  props
+  props,
 ) => (
   <>
     <div class={styles.header}>
@@ -46,6 +46,7 @@ export const RoomsListSidebar: Component<{
         header={<Header setSearchTerm={setSearchTerm} />}>
         <div class={styles.createButtonContainer}>
           <button
+            type="button"
             class={styles.createButton}
             onClick={() => setIsCreateModalOpen(true)}>
             <Plus class={styles.createbuttonIcon} size={18} strokeWidth={2.5} />
@@ -56,6 +57,7 @@ export const RoomsListSidebar: Component<{
           <For each={filteredRooms()}>
             {(room) => (
               <button
+                type="button"
                 class={styles.roomItem}
                 classList={{
                   [styles.active]: room.id === roomsStore.selectedRoom()?.id,

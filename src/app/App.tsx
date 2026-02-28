@@ -44,20 +44,26 @@ const _AppContent: Component = () => {
   const cryptoService = useCryptoService();
 
   const [openSidebar, setOpenSidebar] = createSignal<'rooms' | 'info' | null>(
-    null
+    null,
   );
   const [pendingRoomId, setPendingRoomId] = createSignal<string | null>(null);
+  const [isCheckingRoomAccess, setIsCheckingRoomAccess] = createSignal(false);
 
   const isInfoSidebarOpen = () =>
     openSidebar() === 'info' && roomsStore.selectedRoom() !== null;
   const isRoomsSidebarOpen = () => {
     return openSidebar() === 'rooms' || roomsStore.selectedRoom() === null;
   };
+
   const pendingRoom = createMemo(() => {
     const id = pendingRoomId();
     if (!id) return null;
     return roomsStore.rooms().find((r) => r.id === id) ?? null;
   });
+  const isRoomPassphraseRequired = createMemo(() => pendingRoom() !== null);
+  const isRoomLocked = createMemo(
+    () => isCheckingRoomAccess() || isRoomPassphraseRequired(),
+  );
 
   const handleToggleRoomsSidebar = () => {
     const isRoomsSidebarOpen = openSidebar() === 'rooms';
@@ -70,14 +76,34 @@ const _AppContent: Component = () => {
   };
 
   createEffect(() => {
-    const selectedRoom = roomsStore.selectedRoom();
-    if (selectedRoom && !pendingRoomId()) {
-      cryptoService.hasKey(selectedRoom.id).then((isInitialized) => {
-        if (!isInitialized) setPendingRoomId(selectedRoom.id);
-      });
-    } else if (!selectedRoom && pendingRoomId()) {
+    const selectedRoomId = roomsStore.selectedRoomId();
+    if (!selectedRoomId) {
       setPendingRoomId(null);
+      setIsCheckingRoomAccess(false);
+      return;
     }
+
+    setPendingRoomId(null);
+    setIsCheckingRoomAccess(true);
+
+    const hasSelectedRoomChanged = () =>
+      roomsStore.selectedRoomId() !== selectedRoomId;
+
+    cryptoService
+      .hasKey(selectedRoomId)
+      .then((hasKey) => {
+        if (hasSelectedRoomChanged()) return;
+        if (!hasKey) setPendingRoomId(selectedRoomId);
+      })
+      .catch((error) => {
+        if (hasSelectedRoomChanged()) return;
+        console.warn('Failed to check room key state', error);
+        setPendingRoomId(selectedRoomId);
+      })
+      .finally(() => {
+        if (hasSelectedRoomChanged()) return;
+        setIsCheckingRoomAccess(false);
+      });
   });
 
   return (
@@ -93,6 +119,7 @@ const _AppContent: Component = () => {
       <ChatArea
         onToggleRoomsSidebar={handleToggleRoomsSidebar}
         onToggleInfoSidebar={handleToggleInfoSidebar}
+        isRoomLocked={isRoomLocked()}
       />
       <InfoSidebar isOpen={isInfoSidebarOpen()} />
 
@@ -116,10 +143,10 @@ const _AppContent: Component = () => {
 
 const _AppErrorFallback: Component<{ error: unknown }> = (props) => {
   const errorString = createMemo(() =>
-    props.error instanceof Error ? props.error.toString() : String(props.error)
+    props.error instanceof Error ? props.error.toString() : String(props.error),
   );
   const errorStack = createMemo(() =>
-    props.error instanceof Error ? props.error.stack : undefined
+    props.error instanceof Error ? props.error.stack : undefined,
   );
 
   const handleRefresh = () => {

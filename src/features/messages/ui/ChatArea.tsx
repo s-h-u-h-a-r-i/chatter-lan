@@ -1,10 +1,13 @@
 import {
   Component,
   createMemo,
+  createResource,
   createSignal,
   For,
+  Match,
   Show,
   Suspense,
+  Switch,
 } from 'solid-js';
 
 import { useCryptoService } from '@/core/crypto';
@@ -12,6 +15,7 @@ import { RoomData, useRoomsStore } from '@/features/rooms';
 import { useUserStore } from '@/features/user';
 import { Info, Menu, MessageCircle, Send } from '@/ui/icons';
 import { TextInput } from '@/ui/inputs';
+import { decryptMessageContent } from '../message.crypto';
 import { useRoomMessagesStore } from '../room-messages.store';
 import { MessageData } from '../schemas';
 import styles from './ChatArea.module.css';
@@ -24,6 +28,7 @@ type FormSubmitEvent = SubmitEvent & {
 export const ChatArea: Component<{
   onToggleRoomsSidebar(): void;
   onToggleInfoSidebar(): void;
+  isRoomLocked: boolean;
 }> = (props) => {
   const roomsStore = useRoomsStore();
   const userStore = useUserStore();
@@ -32,23 +37,6 @@ export const ChatArea: Component<{
   const [inputValue, setInputValue] = createSignal('');
 
   const trimmedInputValue = createMemo(() => inputValue().trim());
-
-  const placeHolderMessages = createMemo(() => {
-    const userId = userStore.uid();
-    return Array.from({ length: 20 }, (_, index) => {
-      const isUser = index % 2 === 0;
-      return {
-        id: index.toString(),
-        encryptedContent: {
-          ciphertext: `test ${index}`,
-          iv: 'whatever',
-        },
-        createdAt: new Date(),
-        senderId: isUser ? userId : '456',
-        senderName: isUser ? 'You' : 'Other',
-      } satisfies MessageData;
-    });
-  });
 
   let inputRef: HTMLInputElement | undefined;
 
@@ -66,83 +54,89 @@ export const ChatArea: Component<{
 
   return (
     <div class={styles.container}>
-      <Show when={roomsStore.selectedRoom()} fallback={<_EmptyState />}>
-        {(room) => (
-          <>
-            <div class={styles.header}>
-              <button
-                type="button"
-                class={styles.toggleButton}
-                onClick={props.onToggleRoomsSidebar}
-                aria-label="Open rooms menu">
-                <Menu size={20} strokeWidth={2} />
-              </button>
-              <div class={styles.headerContent}>
-                <div class={styles.roomIcon}>
-                  <MessageCircle size={20} strokeWidth={2} />
+      <Switch>
+        <Match when={!roomsStore.selectedRoom()}>
+          <_ChatState
+            title="Welcome to Chatter-Lan"
+            description="Choose a room from the sidebar to start chatting or create your own room"
+          />
+        </Match>
+
+        <Match when={props.isRoomLocked}>
+          <_ChatState
+            title="Room is locked"
+            description="Enter the room passphrase to decrypt and view messages."
+          />
+        </Match>
+
+        <Match when={roomsStore.selectedRoom()}>
+          {(room) => (
+            <>
+              <div class={styles.header}>
+                <button
+                  type="button"
+                  class={styles.toggleButton}
+                  onClick={props.onToggleRoomsSidebar}
+                  aria-label="Open rooms menu">
+                  <Menu size={20} strokeWidth={2} />
+                </button>
+                <div class={styles.headerContent}>
+                  <div class={styles.roomIcon}>
+                    <MessageCircle size={20} strokeWidth={2} />
+                  </div>
+                  <h2 class={styles.roomName}>{room().name}</h2>
                 </div>
-                <h2 class={styles.roomName}>{room().name}</h2>
+                <button
+                  type="button"
+                  class={styles.toggleButton}
+                  onClick={props.onToggleInfoSidebar}
+                  aria-label="Show room info">
+                  <Info size={20} strokeWidth={2} />
+                </button>
               </div>
-              <button
-                type="button"
-                class={styles.toggleButton}
-                onClick={props.onToggleInfoSidebar}
-                aria-label="Show room info">
-                <Info size={20} strokeWidth={2} />
-              </button>
-            </div>
 
-            <div class={styles.messagesArea}>
-              <Show when={roomMessagesStore.error()}>
-                {(error) => <div class={styles.error}>Error: {error()}</div>}
-              </Show>
+              <div class={styles.messagesArea}>
+                <Show when={roomMessagesStore.error()}>
+                  {(error) => <div class={styles.error}>Error: {error()}</div>}
+                </Show>
 
-              <For each={placeHolderMessages()}>
-                {(message) => (
-                  <Message
-                    room={room()}
-                    message={message}
-                    uid={userStore.uid()}
-                  />
-                )}
-              </For>
+                <Show
+                  when={roomMessagesStore.messages().length > 0}
+                  fallback={<div>This should show nice empty room</div>}>
+                  <For each={roomMessagesStore.messages()}>
+                    {(message) => (
+                      <Message
+                        room={room()}
+                        message={message}
+                        uid={userStore.uid()}
+                      />
+                    )}
+                  </For>
+                </Show>
+              </div>
 
-              {/* <Show
-                when={roomMessagesStore.messages().length > 0}
-                fallback={<div>This should show nice empty room</div>}>
-                <For each={roomMessagesStore.messages()}>
-                  {(message) => (
-                    <Message
-                      room={room()}
-                      message={message}
-                      uid={userStore.uid()}
-                    />
-                  )}
-                </For>
-              </Show> */}
-            </div>
-
-            <form class={styles.inputArea} onSubmit={handleSubmit}>
-              <TextInput
-                ref={inputRef}
-                name="chat-message"
-                value={inputValue()}
-                placeholder="Type your message…"
-                disabled={false}
-                hasError={false}
-                onInput={setInputValue}
-              />
-              <button
-                type="submit"
-                title="Send message"
-                class={styles.sendButton}
-                disabled={!trimmedInputValue()}>
-                <Send size={18} strokeWidth={2} />
-              </button>
-            </form>
-          </>
-        )}
-      </Show>
+              <form class={styles.inputArea} onSubmit={handleSubmit}>
+                <TextInput
+                  ref={inputRef}
+                  name="chat-message"
+                  value={inputValue()}
+                  placeholder="Type your message…"
+                  disabled={false}
+                  hasError={false}
+                  onInput={setInputValue}
+                />
+                <button
+                  type="submit"
+                  title="Send message"
+                  class={styles.sendButton}
+                  disabled={!trimmedInputValue()}>
+                  <Send size={18} strokeWidth={2} />
+                </button>
+              </form>
+            </>
+          )}
+        </Match>
+      </Switch>
     </div>
   );
 };
@@ -154,15 +148,15 @@ const Message: Component<{
 }> = (props) => {
   const cryptoService = useCryptoService();
 
-  // const [decryptedContent] = createResource(
-  //   () => ({
-  //     roomId: props.room.id,
-  //     cryptoService: cryptoService,
-  //     encryptedContent: props.message.encryptedContent,
-  //     roomSalt: props.room.salt,
-  //   }),
-  //   (params) => decryptMessageContent(params)
-  // );
+  const [decryptedContent] = createResource(
+    () => ({
+      roomId: props.room.id,
+      cryptoService: cryptoService,
+      encryptedContent: props.message.encryptedContent,
+      roomSalt: props.room.salt,
+    }),
+    (params) => decryptMessageContent(params),
+  );
 
   return (
     <div
@@ -182,8 +176,7 @@ const Message: Component<{
         <div class={styles.messageBubble}>
           <div class={styles.messageText}>
             <Suspense fallback={<span>...</span>}>
-              {/* {decryptedContent()} */}
-              {props.message.encryptedContent.ciphertext}
+              {decryptedContent()}
             </Suspense>
           </div>
           <div class={styles.timestamp}>
@@ -198,14 +191,15 @@ const Message: Component<{
   );
 };
 
-const _EmptyState: Component = (props) => (
+const _ChatState: Component<{
+  title: string;
+  description: string;
+}> = (props) => (
   <div class={styles.emptyState}>
     <div class={styles.emptyIcon}>
       <MessageCircle size={64} strokeWidth={1.5} />
     </div>
-    <h3>Welcome to Chatter-Lan</h3>
-    <p>
-      Choose a room from the sidebar to start chatting or create your own room
-    </p>
+    <h3>{props.title}</h3>
+    <p>{props.description}</p>
   </div>
 );
