@@ -36,13 +36,24 @@ export const ChatArea: Component<{
   const trimmedInputValue = createMemo(() => inputValue().trim());
 
   let inputRef: HTMLInputElement | undefined;
+  let messagesAreaRef: HTMLDivElement | undefined;
+
+  const scrollMessagesToBottom = () => {
+    if (!messagesAreaRef) return;
+    messagesAreaRef.scrollTo({
+      top: messagesAreaRef.scrollHeight,
+      behavior: 'smooth',
+    });
+  };
 
   const handleSubmit = async (e: FormSubmitEvent) => {
     e.preventDefault();
     const trimmed = trimmedInputValue();
     if (!trimmed) return;
     setInputValue('');
-    await roomMessagesStore.sendMessage(trimmed);
+    const sendPromise = roomMessagesStore.sendMessage(trimmed);
+    scrollMessagesToBottom();
+    await sendPromise;
   };
 
   return (
@@ -73,7 +84,7 @@ export const ChatArea: Component<{
               </button>
             </div>
 
-            <div class={styles.messagesArea}>
+            <div ref={messagesAreaRef} class={styles.messagesArea}>
               <Show when={roomMessagesStore.error()}>
                 {(error) => <div class={styles.error}>Error: {error()}</div>}
               </Show>
