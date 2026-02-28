@@ -1,3 +1,3 @@
 export * from './InfoSidebar';
-export * from './PassphraseModal';
+export * from './PassphrasePrompt';
 export * from './RoomListSidebar';
