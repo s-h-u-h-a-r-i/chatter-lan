@@ -14,7 +14,7 @@ import { useUserStore } from '@/features/user';
 import { Info, Menu, MessageCircle, Send } from '@/ui/icons';
 import { TextInput } from '@/ui/inputs';
 import { decryptMessageContent } from '../message.crypto';
-import { useRoomMessagesStore } from '../room-messages.store';
+import { RoomMessage, useRoomMessagesStore } from '../room-messages.store';
 import { MessageData } from '../schemas';
 import styles from './ChatArea.module.css';
 
@@ -41,12 +41,8 @@ export const ChatArea: Component<{
     e.preventDefault();
     const trimmed = trimmedInputValue();
     if (!trimmed) return;
-    try {
-      await roomMessagesStore.sendMessage(trimmed);
-      setInputValue('');
-    } catch (error) {
-      console.error('Failed to send message', error);
-    }
+    setInputValue('');
+    await roomMessagesStore.sendMessage(trimmed);
   };
 
   return (
@@ -123,27 +119,18 @@ export const ChatArea: Component<{
 };
 
 const Message: Component<{
-  message: MessageData;
+  message: RoomMessage;
   room: RoomData;
   uid: string;
 }> = (props) => {
-  const cryptoService = useCryptoService();
-
-  const [decryptedContent] = createResource(
-    () => ({
-      roomId: props.room.id,
-      cryptoService: cryptoService,
-      encryptedContent: props.message.encryptedContent,
-      roomSalt: props.room.salt,
-    }),
-    (params) => decryptMessageContent(params),
-  );
-
   return (
     <div
       class={styles.message}
       classList={{
         [styles.ownMessage]: props.message.senderId === props.uid,
+        [styles.messageEnter]: props.message.status === 'sending',
+        [styles.pendingMessage]: props.message.status === 'sending',
+        [styles.failedMessage]: props.message.status === 'failed',
       }}>
       <Show when={props.message.senderId !== props.uid}>
         <div class={styles.avatar}>
@@ -156,20 +143,51 @@ const Message: Component<{
         </Show>
         <div class={styles.messageBubble}>
           <div class={styles.messageText}>
-            <Suspense fallback={<span>...</span>}>
-              {decryptedContent()}
-            </Suspense>
+            {props.message.status === 'confirmed' ? (
+              <_ConfirmedMessageText
+                message={props.message}
+                roomId={props.room.id}
+                roomSalt={props.room.salt}
+              />
+            ) : (
+              props.message.plainText
+            )}
           </div>
           <div class={styles.timestamp}>
             {props.message.createdAt.toLocaleDateString([], {
               hour: '2-digit',
               minute: '2-digit',
             })}
+            <Show when={props.message.status === 'sending'}>
+              <span class={styles.messageStatus}> • Sending...</span>
+            </Show>
+            <Show when={props.message.status === 'failed'}>
+              <span class={styles.messageStatus}> • Failed to send</span>
+            </Show>
           </div>
         </div>
       </div>
     </div>
   );
+};
+
+const _ConfirmedMessageText: Component<{
+  message: MessageData;
+  roomId: string;
+  roomSalt: string;
+}> = (props) => {
+  const cryptoService = useCryptoService();
+  const [decryptedContent] = createResource(
+    () => ({
+      roomId: props.roomId,
+      cryptoService,
+      encryptedContent: props.message.encryptedContent,
+      roomSalt: props.roomSalt,
+    }),
+    (params) => decryptMessageContent(params),
+  );
+
+  return <Suspense fallback={<span>...</span>}>{decryptedContent()}</Suspense>;
 };
 
 const _EmptyRoomState: Component<{ roomName: string }> = (props) => (

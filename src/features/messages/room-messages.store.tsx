@@ -2,6 +2,7 @@ import {
   Accessor,
   createContext,
   createEffect,
+  createMemo,
   createSignal,
   onCleanup,
   ParentComponent,
@@ -19,8 +20,21 @@ import { MessageData } from './schemas';
 // Types
 // =====================================================================
 
+type PendingMessageStatus = 'sending' | 'failed';
+
+type PendingMessage = {
+  id: string;
+  createdAt: Date;
+  senderId: string;
+  senderName: string;
+  plainText: string;
+  status: PendingMessageStatus;
+};
+
+export type RoomMessage = MessageData | PendingMessage;
+
 interface RoomMessagesStore {
-  messages: Accessor<MessageData[]>;
+  messages: Accessor<RoomMessage[]>;
   error: Accessor<string | null>;
   sendMessage(plainText: string): Promise<void>;
 }
@@ -36,23 +50,28 @@ export const RoomMessagesStoreProvider: ParentComponent = (props) => {
   const roomsStore = useRoomsStore();
   const cryptoService = useCryptoService();
 
-  const [messages, setMessages] = createSignal<MessageData[]>([]);
+  const [messages, setMessages] = createSignal<RoomMessage[]>([]);
   const [error, setError] = createSignal<string | null>(null);
 
   createEffect(() => {
     const roomId = roomsStore.selectedRoomId();
     const ip = userStore.ip();
 
-    if (!roomId) return;
+    setMessages([]);
+    setError(null);
+
+    if (!roomId) {
+      return;
+    }
 
     const unsubscribe = messageRepo.subscribeToMessages({
       ip,
       roomId,
       onUpsert(incoming) {
-        setMessages((prev) => _mergeMessages(prev, incoming));
+        setMessages((prev) => _upsertConfirmedMessages(prev, incoming));
       },
       onRemove(ids) {
-        setMessages((prev) => prev.filter((msg) => !ids.includes(msg.id)));
+        setMessages((prev) => prev.filter((message) => !ids.includes(message.id)));
       },
       onError(err) {
         setError(err);
@@ -69,24 +88,65 @@ export const RoomMessagesStoreProvider: ParentComponent = (props) => {
   const sendMessage = async (plainText: string): Promise<void> => {
     const room = roomsStore.selectedRoom();
     if (!room) {
-      throw new Error('No room selected');
+      setError('No room selected');
+      return;
     }
 
-    const encryptedContent = await encryptMessageContent({
-      roomId: room.id,
-      cryptoService,
+    const ip = userStore.ip();
+    const roomId = room.id;
+    const senderId = userStore.uid();
+    const senderName = userStore.name();
+    const messageId = crypto.randomUUID();
+
+    setMessages((prev) =>
+      _sortMessagesByCreatedAt([
+        ...prev,
+        {
+      id: messageId,
+      createdAt: new Date(),
+      senderId,
+      senderName,
       plainText,
-    });
+      status: 'sending',
+        },
+      ]),
+    );
 
-    if (!encryptedContent) {
-      throw new Error('Failed to encrypt message');
+    try {
+      const encryptedContent = await encryptMessageContent({
+        roomId,
+        cryptoService,
+        plainText,
+      });
+
+      if (!encryptedContent) {
+        throw new Error('Failed to encrypt message');
+      }
+
+      await messageRepo.createMessage(ip, roomId, messageId, {
+        encryptedContent,
+        senderId,
+        senderName,
+      });
+
+      await messageRepo.waitForMessageConfirmation({
+        ip,
+        roomId,
+        messageId,
+        timeoutMs: 10_000,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to send message';
+      setError(message);
+      setMessages((prev) =>
+        prev.map((entry) =>
+          entry.id === messageId && entry.status !== 'confirmed'
+            ? { ...entry, status: 'failed' as const }
+            : entry,
+        ),
+      );
+      console.error('Failed to send message', err);
     }
-
-    await messageRepo.createMessage(userStore.ip(), room.id, {
-      encryptedContent,
-      senderId: userStore.uid(),
-      senderName: userStore.name(),
-    });
   };
 
   const context: RoomMessagesStore = {
@@ -116,16 +176,21 @@ export function useRoomMessagesStore() {
 // Helpers
 // =====================================================================
 
-function _mergeMessages(
-  prev: MessageData[],
+function _upsertConfirmedMessages(
+  prev: RoomMessage[],
   incoming: MessageData[],
-): MessageData[] {
+): RoomMessage[] {
   const map = new Map(prev.map((m) => [m.id, m]));
   incoming.forEach((m) => {
     map.set(m.id, m);
   });
-  // Sort messages in ascending order by creation time (oldest first)
-  return [...map.values()].sort(
-    (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-  );
+  return _sortMessagesByCreatedAt([...map.values()]);
+}
+
+function _sortMessagesByCreatedAt(messages: RoomMessage[]): RoomMessage[] {
+  return messages.sort((a, b) => {
+    const diff = a.createdAt.getTime() - b.createdAt.getTime();
+    if (diff !== 0) return diff;
+    return a.id.localeCompare(b.id);
+  });
 }

@@ -11,6 +11,7 @@ const MessageDataSchema = z.object({
   senderId: z.string(),
   senderName: z.string(),
   encryptedContent: MessageEncryptedContentSchema,
+  status: z.literal('confirmed'),
 });
 
 export type MessageEncryptedContent = z.infer<
